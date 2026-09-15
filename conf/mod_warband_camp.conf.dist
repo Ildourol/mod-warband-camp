@@ -1,0 +1,92 @@
+#
+# Copyright (C) 2025+ WOW Legends / Standalone Port
+# Released under GNU AGPL v3 license.
+#
+
+[worldserver]
+
+###################################################################################################
+# WARBAND CAMP SETTINGS
+#
+#    WarbandCamp.Enabled
+#        Description: Enable the .camp commands and Warband Camps system.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.Enabled = 1
+
+#    WarbandCamp.MaxProps
+#        Description: How many props one camp may hold. 0 = unlimited.
+#                     Every placement uses a server gameobject GUID.
+#        Default:     200
+
+WarbandCamp.MaxProps = 200
+
+#    WarbandCamp.ViewDistance
+#        Description: How close (yards) before a camp phases into view.
+#                     0 = no distance gate (clamped between 20 and 250).
+#                     Default 40 matches the camp radius.
+#        Default:     40
+
+WarbandCamp.ViewDistance = 40
+
+#    WarbandCamp.AutoAlts
+#        Description: When a player who owns a camp logs in, their other characters wake as
+#                     playerbots and gather around the camp campfire.
+#                     Only meaningful while mod-playerbots is installed.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.AutoAlts = 1
+
+#    WarbandCamp.AltsSameFactionOnly
+#        Description: Only gather alts belonging to the same faction as the active character.
+#                     1 = only same-faction characters gather at the camp.
+#                     0 = all characters on the account gather regardless of faction.
+#        Default:     1 (Same faction only)
+
+WarbandCamp.AltsSameFactionOnly = 1
+
+#    WarbandCamp.EnableRestedXP
+#        Description: Grant rested XP and instant logout when players are inside their camp.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.EnableRestedXP = 1
+
+#    WarbandCamp.EnableMailbox
+#        Description: Allow players to place a personal camp mailbox (.camp place mailbox).
+#                     Maximum 1 mailbox allowed per camp.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.EnableMailbox = 1
+
+#    WarbandCamp.EnableTrainingDummy
+#        Description: Allow players to spawn a training dummy in their camp (.camp dummy).
+#                     Maximum 1 dummy allowed per camp.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.EnableTrainingDummy = 1
+
+#    WarbandCamp.InactivityDays
+#        Description: Automatically release camps whose accounts have not logged in for X days.
+#                     0 = Disabled (camps remain indefinitely).
+#        Default:     90
+
+WarbandCamp.InactivityDays = 90
+
+#    WarbandCamp.BlacklistedMaps
+#        Description: Comma-separated list of Map IDs where camps cannot be claimed.
+#        Example:     "37, 530"
+#        Default:     ""
+
+WarbandCamp.BlacklistedMaps = ""
+
+#    WarbandCamp.BlacklistedZones
+#        Description: Comma-separated list of Zone/Area IDs where camps cannot be claimed.
+#        Example:     "1519, 1537"
+#        Default:     ""
+
+WarbandCamp.BlacklistedZones = ""
