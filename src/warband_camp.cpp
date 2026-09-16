@@ -305,7 +305,7 @@ namespace
     };
     std::vector<AltGather> g_altGathers;
 
-    bool IsRealPlayer(Player* p)
+    bool IsWarbandRealPlayer(Player* p)
     {
         return p && p->GetSession() && !p->GetSession()->IsBot();
     }
@@ -565,7 +565,7 @@ namespace
         if (Creature* cr = map->GetCreature(it->second))
         {
             cr->SetRespawnTime(0);
-            cr->DespawnOrUnSummon();
+            cr->DespawnOrUnsummon();
         }
         g_liveCreatures.erase(it);
     }
@@ -925,7 +925,7 @@ public:
     static bool Gate(ChatHandler* handler, Player*& me)
     {
         me = handler->GetSession() ? handler->GetSession()->GetPlayer() : nullptr;
-        if (!IsRealPlayer(me))
+        if (!IsWarbandRealPlayer(me))
             return false;
 
         if (!g_enabled.load())
@@ -2191,7 +2191,7 @@ public:
 
     void OnPlayerUpdate(Player* player, uint32 diff) override
     {
-        if (!g_enabled.load() || !IsRealPlayer(player))
+        if (!g_enabled.load() || !IsWarbandRealPlayer(player))
             return;
 
         std::lock_guard<std::mutex> lock(g_campMutex);
@@ -2209,7 +2209,7 @@ public:
 
     void OnPlayerMapChanged(Player* player) override
     {
-        if (!IsRealPlayer(player))
+        if (!IsWarbandRealPlayer(player))
             return;
 
         std::lock_guard<std::mutex> lock(g_campMutex);
@@ -2227,7 +2227,7 @@ public:
 
     void OnPlayerLogin(Player* player) override
     {
-        if (!g_enabled.load() || !IsRealPlayer(player))
+        if (!g_enabled.load() || !IsWarbandRealPlayer(player))
             return;
 
         uint32 const accountId = player->GetSession()->GetAccountId();

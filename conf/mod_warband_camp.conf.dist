@@ -90,3 +90,10 @@ WarbandCamp.BlacklistedMaps = ""
 #        Default:     ""
 
 WarbandCamp.BlacklistedZones = ""
+
+# Aliases for WowLegends legacy namespace compatibility
+WowLegends.WarbandCamp.Enabled = 1
+WowLegends.WarbandCamp.AutoAlts = 1
+WowLegends.WarbandCamp.MaxProps = 200
+WowLegends.WarbandCamp.ViewDistance = 40
+WowLegends.WarbandCamp.AltsSameFactionOnly = 1
