@@ -55,6 +55,12 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
   - When `mod-playerbots` is installed, `.camp alts` and `WarbandCamp.AutoAlts` rouse the player's offline alts to gather around the campfire and stroll along the perimeter.
   - Logging into a parked alt restores the character to their previous location in the world.
   - Zero hard dependencies: If `mod-playerbots` is not present, the module compiles and runs cleanly.
+- **Integrated GOMove GameObject Management**:
+  - In-game GameObject placement, directional nudging (compass, axis, rotation), scaling, and deletion.
+  - Search `gameobject_template` with 3D model preview via `.gomovesearch`.
+  - Ground-target spell placement mode (Spell ID: 27651 - *Picnic Blanket Ritual Effect*).
+  - Automatically grants the placement spell to Game Master level accounts upon login.
+  - Per-instance GameObject scale overrides persisted across server restarts.
 
 ---
 
@@ -66,12 +72,20 @@ mod-warband-camp/
 │   └── mod_warband_camp.conf.dist       # Module configuration template
 ├── data/
 │   └── sql/
-│       └── db-characters/
+│       ├── db-characters/
+│       │   └── base/
+│       │       ├── mod_warband_camp.sql         # Character database schema
+│       │       └── mod_gomove_characters.sql    # GOMove GM character spell grant
+│       └── db-world/
 │           └── base/
-│               └── mod_warband_camp.sql # Character database schema
+│               └── mod_gomove.sql               # GOMove world DB schema & commands
 ├── src/
 │   ├── mod_warband_camp_loader.cpp      # Script loader entry point
-│   └── warband_camp.cpp                 # Core C++ implementation
+│   ├── warband_camp.cpp                 # Core C++ implementation
+│   ├── GOMove.h                         # GOMove header
+│   ├── GOMove.cpp                       # GOMove core operations
+│   └── GOMoveScripts.cpp                # GOMove commands & placement spell script
+├── CMakeLists.txt                       # Build script
 ├── assets/                              # Documentation media
 ├── acore-module.json                    # Module metadata
 ├── include.sh                           # Build script hook
@@ -131,6 +145,8 @@ mod-warband-camp/
 | `.camp catalogue` | Game Master | Layout available props in a grid for inspection. |
 | `.camp diag <player>` | Administrator | Diagnostic verification of terrain, phases, and prop spawning. |
 | `.camp reload` | Administrator | Reload configuration and blacklists without restart. |
+| `.gomove <id> [guid] [arg]` | Game Master | GOMove core command for spawning, moving, nudging, and deleting GameObjects. |
+| `.gomovesearch <name\|entry>` | Game Master | GOMove browser search. Queries `gameobject_template` and returns results. |
 
 ---
 
@@ -161,6 +177,14 @@ Detailed configuration options are documented in `conf/mod_warband_camp.conf.dis
 - Compatible with:
   - [mod-playerbots](https://github.com/liyunfan1223/mod-playerbots)
   - [QOLAddon](https://github.com/Ildourol/QOLAddon)
+
+---
+
+## Credits
+
+- **Rochet2** — Original GOMove addon and server implementation.
+- **Project Rx** — AzerothCore GOMove port and GameObject Browser extension.
+- **WOW Legends** — Original Warband Camp implementation.
 
 ---
 

@@ -7,8 +7,10 @@
 // AzerothCore automatically invokes Add<module-folder-with-underscores>Scripts() on startup.
 
 void AddWarbandCampScripts();
+void AddSC_GOMove_commandscript();
 
 void Addmod_warband_campScripts()
 {
     AddWarbandCampScripts();
+    AddSC_GOMove_commandscript();
 }
