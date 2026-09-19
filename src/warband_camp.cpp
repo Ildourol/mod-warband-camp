@@ -97,93 +97,237 @@ namespace
         uint32 entry;
         char const* label;
         float clearance;
+        bool isCreature = false;
     };
 
-    PropDef const g_propCatalogue[] =
+PropDef const g_propCatalogue[] =
     {
         // shelter
-        { "tent",       184592, "Tent",             6.0f },
-        { "tent-a",     201868, "Alliance Tent",    7.0f },
-        { "tent-h",     201886, "Horde Tent",       7.0f },
-        // fire and light
-        { "campfire",   182059, "Campfire",         3.0f },
-        { "bonfire",    180434, "Bonfire",          3.5f },
-        { "brazier",    180473, "Brazier",          2.5f },
-        { "lantern",    179977, "Lantern",          2.0f },
+        { "tent", 184592, "Tent", 6.0f },
+        { "tent-a", 201868, "Alliance Tent", 7.0f },
+        { "tent-h", 201886, "Horde Tent", 7.0f },
+        { "foodtent", 186681, "Food Tent", 7.0f },
+        { "tent-dwarf", 184696, "Dwarven Tent", 5.0f },
+        { "tent-orc", 193127, "Orc Tent", 5.5f },
+        { "tent-undead", 190213, "Forsaken Tent", 6.5f },
+        { "tent-scourge", 190666, "Scourge Tent", 6.5f },
+        { "canopy", 186680, "Open Canopy", 6.0f },
+        { "tent-carnival", 179966, "Carnival Tent", 9.0f },
+        // fire & light
+        { "campfire", 182059, "Campfire", 3.0f },
+        { "bonfire", 180434, "Bonfire", 3.5f },
+        { "brazier", 180473, "Brazier", 2.5f },
+        { "lantern", 179977, "Lantern", 2.0f },
+        { "bonfire-blue", 181289, "Blue Fire Bonfire", 3.5f },
+        { "bonfire-orc", 184866, "Orc Bonfire", 3.5f },
+        { "brazier-festival", 181355, "Festival Brazier", 2.5f },
+        { "brazier-purple", 176326, "Purple Brazier", 2.5f },
+        { "brazier-legion", 184613, "Legion Brazier", 2.5f },
+        { "bowl-fire", 182078, "Elven Fire Bowl", 3.0f },
+        { "hearth-fire", 151952, "Great Hearth Fire", 3.0f },
         // furniture
-        { "table",      181075, "Table",            3.5f },
-        { "chair",      193949, "Chair",            2.5f },
-        { "bench",      190694, "Bench",            3.0f },
-        { "rug",        181077, "Rug",              3.0f },
-        { "bookshelf",  183268, "Bookshelf",        3.0f },
-        { "bookcase",   190693, "Bookcase",         3.0f },
+        { "table", 181075, "Table", 3.5f },
+        { "chair", 193949, "Chair", 2.5f },
+        { "bench", 190694, "Bench", 3.0f },
+        { "rug", 181077, "Rug", 3.0f },
+        { "bookshelf", 183268, "Bookshelf", 3.0f },
+        { "bookcase", 190693, "Bookcase", 3.0f },
+        { "bunkbed", 193167, "Bunkbed", 3.5f },
+        { "bed-stone", 185475, "Stone Bed", 3.0f },
+        { "chair-dalaran", 192842, "Dalaran Chair", 2.0f },
+        { "stool-elven", 182077, "Elven Stool", 2.0f },
+        { "bench-orc", 180326, "Orc Bench", 3.5f },
+        { "bench-wood", 193522, "Duskwood Bench", 3.0f },
+        { "table-elven", 180879, "Elven Table", 3.0f },
+        { "table-orc", 180888, "Orc Table", 3.0f },
+        { "table-dwarf", 180324, "Dwarven Table", 3.5f },
+        { "throne", 188481, "Chieftain Throne", 4.0f },
+        { "wardrobe", 183267, "Wardrobe", 3.0f },
+        { "rug-sw", 180334, "Stormwind Rug", 3.0f },
+        { "rug-tauren", 182257, "Tauren Rug", 3.0f },
+        { "rug-fur", 186933, "Vrykul Fur Rug", 3.0f },
         // storage & amenities
-        { "crate",      178646, "Supply Crate",     2.5f },
-        { "crate-h",    178442, "Horde Crate",      2.5f },
-        { "barrel",     180779, "Barrel",           2.5f },
-        { "keg",        180575, "Keg",              2.5f },
-        { "cauldron",   180414, "Cauldron",         2.5f },
-        { "cookpot",    184670, "Cook Pot",         2.5f },
-        { "mailbox",    142103, "Mailbox",          2.5f },
+        { "crate", 178646, "Supply Crate", 2.5f },
+        { "crate-h", 178442, "Horde Crate", 2.5f },
+        { "barrel", 180779, "Barrel", 2.5f },
+        { "keg", 180575, "Keg", 2.5f },
+        { "cauldron", 180414, "Cauldron", 2.5f },
+        { "cookpot", 184670, "Cook Pot", 2.5f },
+        { "mailbox", 142103, "Mailbox", 2.5f },
+        { "chest-ornate", 188225, "Ornate Chest", 2.5f },
+        { "chest-reinforced", 186658, "Reinforced Chest", 2.5f },
+        { "keg-brewfest", 186709, "Brewfest Ale Keg", 2.0f },
+        { "tub", 200296, "Washing Tub", 2.5f },
+        { "basin", 201774, "Water Basin", 2.5f },
+        { "crate-orc", 184856, "Orc Crate", 2.5f },
+        { "crate-grain", 190094, "Grain Crate", 2.5f },
+        { "barrel-plague", 193414, "Plague Barrel", 2.5f },
+        { "barrel-broken", 190881, "Broken Barrel", 2.5f },
         // yard
-        { "wagon",      188696, "Wagon",            8.0f },
-        { "haystack",   179968, "Haystack",         3.5f },
-        { "haybale",    180700, "Hay Bale",         3.0f },
-        { "woodpile",   190687, "Wood Pile",        3.5f },
-        { "logpile",    194393, "Log Pile",         3.0f },
-        { "fence",      180035, "Fence",            4.0f },
-        { "rockwall",   211064, "Rockwall Fence",   4.0f },
-        { "pumpkin",    195164, "Pumpkin",          2.0f },
+        { "wagon", 188696, "Wagon", 8.0f },
+        { "haystack", 179968, "Haystack", 3.5f },
+        { "haybale", 180700, "Hay Bale", 3.0f },
+        { "woodpile", 190687, "Wood Pile", 3.5f },
+        { "logpile", 194393, "Log Pile", 3.0f },
+        { "fence", 180035, "Fence", 4.0f },
+        { "rockwall", 211064, "Rockwall Fence", 4.0f },
+        { "pumpkin", 195164, "Pumpkin", 2.0f },
+        { "wheelbarrow", 190859, "Wheelbarrow", 2.5f },
+        { "target-archery", 183440, "Archery Target", 2.5f },
+        { "target-dwarf", 193157, "Dwarf Target Dummy", 2.5f },
+        { "target-ogre", 186597, "Ogre Target Dummy", 2.5f },
+        { "barricade", 193612, "Trench Barricade", 4.0f },
+        { "cart-broken", 186807, "Broken Cart", 3.5f },
+        { "cart-rocket", 190227, "Rocket Cart", 3.5f },
+        { "fence-spiked", 180742, "Spiked Iron Fence", 3.5f },
+        { "lightwell", 190746, "Holy Light Well", 3.0f },
+        { "fountain-elven", 185493, "Elven Fountain", 3.5f },
         // craft
-        { "anvil",      201771, "Anvil",            3.0f },
-        { "forge",      201772, "Forge",            3.5f },
-        { "coals",      201773, "Forge Coals",      2.5f },
-        { "weaponrack", 183269, "Weapon Rack",      3.0f },
+        { "anvil", 201771, "Anvil", 3.0f },
+        { "forge", 201772, "Forge", 3.5f },
+        { "coals", 201773, "Forge Coals", 2.5f },
+        { "weaponrack", 183269, "Weapon Rack", 3.0f },
+        { "toolbox", 193151, "Blacksmith Toolbox", 2.0f },
+        { "rack-scourge", 190576, "Scourge Weapon Rack", 3.0f },
+        { "rack-blades", 190577, "Scourge Blade Rack", 3.0f },
+        { "grinder", 188190, "Gem Grinder", 2.5f },
+        { "runeforge", 191746, "Scourge Runeforge", 5.0f },
+        { "hammer", 186623, "Smithing Hammer", 2.0f },
         // banners
-        { "banner",     180773, "Banner",           2.5f },
-        { "banner-a",   192252, "Alliance Banner",  2.5f },
-        { "banner-h",   192254, "Horde Banner",     2.5f },
-        // light
-        { "torch",      180352, "Torch",            2.5f },
-        { "candle",       1558, "Candle",           2.0f },
-        { "candelabra",   2697, "Candelabra",       2.5f },
-        // storage and food
-        { "sack",       195197, "Grain Sack",       2.5f },
-        { "basket",     195196, "Basket",           2.5f },
-        { "corn",       195192, "Basket of Corn",   2.0f },
-        { "bucket",       2696, "Bucket",           2.0f },
-        { "bottle",       2687, "Bottle",           2.0f },
-        { "bread",      180051, "Bread",            2.0f },
-        { "food",        56903, "Spread of Food",   2.0f },
-        { "chest",      185503, "Chest",            3.0f },
+        { "banner", 180773, "Banner", 2.5f },
+        { "banner-a", 192252, "Alliance Banner", 2.5f },
+        { "banner-h", 192254, "Horde Banner", 2.5f },
+        { "banner-sw", 194274, "Stormwind Banner", 2.5f },
+        { "banner-org", 194278, "Orgrimmar Banner", 2.5f },
+        { "banner-if", 194277, "Ironforge Banner", 2.5f },
+        { "banner-dar", 194282, "Darnassus Banner", 2.5f },
+        { "banner-gnome", 194279, "Gnomeregan Banner", 2.5f },
+        { "banner-exo", 194280, "Exodar Banner", 2.5f },
+        { "banner-tb", 194283, "Thunder Bluff Banner", 2.5f },
+        { "banner-uc", 194276, "Undercity Banner", 2.5f },
+        { "banner-smc", 194275, "Silvermoon Banner", 2.5f },
+        { "banner-senjin", 194281, "Sen'jin Banner", 2.5f },
+        { "banner-sun", 187123, "Shattered Sun Banner", 2.5f },
+        { "banner-fk", 190670, "Forsaken Banner", 2.5f },
+        // lights
+        { "torch", 180352, "Torch", 2.5f },
+        { "candle", 1558, "Candle", 2.0f },
+        { "candelabra", 2697, "Candelabra", 2.5f },
+        { "torch-stand", 180043, "Standing Torch", 2.0f },
+        { "lamp-alliance", 180766, "Alliance Street Lantern", 2.5f },
+        { "lamp-horde", 180768, "Horde Street Lantern", 2.5f },
+        { "lamp-draenei", 184284, "Crystal Lamppost", 2.5f },
+        { "torch-fel", 185003, "Fel Torch", 2.0f },
+        // food & provisions
+        { "sack", 195197, "Grain Sack", 2.5f },
+        { "basket", 195196, "Basket", 2.5f },
+        { "corn", 195192, "Basket of Corn", 2.0f },
+        { "bucket", 2696, "Bucket", 2.0f },
+        { "bottle", 2687, "Bottle", 2.0f },
+        { "bread", 180051, "Bread", 2.0f },
+        { "food", 56903, "Spread of Food", 2.0f },
+        { "chest", 185503, "Chest", 3.0f },
+        { "roastboar", 181145, "Roast Boar Platter", 2.0f },
+        { "fishplatter", 181143, "Fish Platter", 2.0f },
+        { "fruitbowl", 181144, "Fruit Bowl", 2.0f },
+        { "apples", 183995, "Basket of Apples", 2.0f },
+        { "campjug", 181306, "Camp Jug", 2.0f },
+        { "campmug", 181307, "Camp Mug", 1.5f },
+        { "breadslice", 180050, "Sliced Bread", 1.5f },
+        { "tacklebox", 180403, "Tackle Box", 2.0f },
         // atmosphere
-        { "skull",        2371, "Skull",            2.5f },
-        { "totem",      187890, "Totem",            2.0f },
-        { "gong",       180386, "Gong",             3.0f },
-        { "drum",       186865, "Drum",             2.5f },
-        { "statue",     192948, "Jade Statue",      3.0f },
-        { "grave",      211065, "Grave",            3.0f },
-        { "cage",       181379, "Cage",             3.0f },
-        { "anchor",     177791, "Anchor",           2.5f },
-        { "signpost",   180026, "Signpost",         2.5f },
-        { "scroll",     182005, "Scroll",           2.0f },
-        { "shovel",     180651, "Shovel",           2.5f },
+        { "skull", 2371, "Skull", 2.5f },
+        { "totem", 187890, "Totem", 2.0f },
+        { "gong", 180386, "Gong", 3.0f },
+        { "drum", 186865, "Drum", 2.5f },
+        { "statue", 192948, "Jade Statue", 3.0f },
+        { "grave", 211065, "Grave", 3.0f },
+        { "cage", 181379, "Cage", 3.0f },
+        { "anchor", 177791, "Anchor", 2.5f },
+        { "signpost", 180026, "Signpost", 2.5f },
+        { "scroll", 182005, "Scroll", 2.0f },
+        { "shovel", 180651, "Shovel", 2.5f },
+        { "warmap", 180852, "Tactical War Map", 3.0f },
+        { "skeleton", 176745, "Human Skeleton", 2.5f },
+        { "tombstone", 177239, "Stone Tombstone", 2.5f },
+        { "totem-tauren", 177268, "Great Tauren Totem", 3.0f },
+        { "totem-small", 180209, "Small Totem", 2.0f },
+        { "crystal-red", 164838, "Glowing Red Crystal", 2.5f },
+        { "altar", 180875, "Stone Altar", 3.0f },
+        { "spellbook", 152098, "Open Spellbook", 2.0f },
         // nature
-        { "mushroom",   182073, "Giant Mushroom",   7.0f },
-        { "flower",     181103, "Flowers",          2.0f },
-        { "bush",       181824, "Bush",             2.5f },
-        // craft & utility
-        { "alchemy",    187114, "Alchemy Table",    3.0f },
-        { "fishing",    173086, "Fishing Gear",     3.0f },
-        // structures
-        { "foodtent",   186681, "Food Tent",        7.0f },
-        { "cottage",    183493, "Cottage",         14.0f },
-        { "beertent",   186682, "Beer Tent",       10.0f },
-        { "pavilion",   188021, "Pavilion",        10.0f },
-        { "bigtent",    184593, "Large Tent",       8.0f },
-        { "stable",     180719, "Stable",          10.0f },
-        { "doghouse",   180033, "Doghouse",         4.0f },
-        { "outhouse",   180006, "Outhouse",         5.0f },
+        { "mushroom", 182073, "Giant Mushroom", 7.0f },
+        { "flower", 181103, "Flowers", 2.0f },
+        { "bush", 181824, "Bush", 2.5f },
+        { "plant-potted", 181019, "Potted Plant", 2.0f },
+        { "flowers-tribute", 180210, "Flower Bouquet", 2.0f },
+        { "wreath", 181063, "Flower Wreath", 2.0f },
+        { "vine-purple", 178904, "Purple Celebrian Vine", 2.5f },
+        { "plant-fern", 178908, "Wild Fern", 2.0f },
+        { "tree-pine", 178557, "Camp Pine Tree", 5.0f },
+        { "pumpkinpatch", 180219, "Pumpkin Patch", 3.0f },
+        // professions
+        { "alchemy", 187114, "Alchemy Table", 3.0f },
+        { "fishing", 173086, "Fishing Gear", 3.0f },
+        { "alchemy-undead", 176561, "Forsaken Alchemy Bench", 3.0f },
+        { "alchemy-round", 190689, "Apothecary Chemistry Set", 2.5f },
+        { "cauldron-boiling", 188468, "Bubbling Cauldron", 2.5f },
+        { "mortar", 190229, "Mortar and Pestle", 1.5f },
+        { "herbsack", 184798, "Herb Sacks", 2.0f },
+        { "herbrack", 180801, "Herb Drying Rack", 3.0f },
+        { "engineering-gizmo", 188091, "Engineering Gizmo", 2.0f },
+        { "ore-gold", 211032, "Gold Vein Deposit", 3.0f },
+        // buildings
+        { "cottage", 183493, "Cottage", 14.0f },
+        { "beertent", 186682, "Beer Tent", 10.0f },
+        { "pavilion", 188021, "Pavilion", 10.0f },
+        { "bigtent", 184593, "Large Tent", 8.0f },
+        { "stable", 180719, "Stable", 10.0f },
+        { "doghouse", 180033, "Doghouse", 4.0f },
+        { "outhouse", 180006, "Outhouse", 5.0f },
+        { "pavilion-dwarf", 181301, "Dwarven Pavilion", 7.0f },
+        { "pavilion-orc", 191784, "Orc War Pavilion", 8.0f },
+        { "hut-murloc", 186742, "Tribal Thatched Hut", 7.0f },
+        { "hut-stilt", 186743, "Stilt Water Hut", 8.0f },
+        { "booth", 180042, "Carnival Booth", 6.0f },
+        // portals
+        { "portal-sw", 193956, "Stormwind Portal", 3.0f },
+        { "portal-org", 193427, "Orgrimmar Portal", 3.0f },
+        { "portal-dal", 194481, "Dalaran Portal", 3.0f },
+        { "portal-shatt", 187335, "Shattrath Portal", 3.0f },
+        { "portal-dark", 185103, "Dark Portal", 8.0f },
+        { "portal-green", 181623, "Emerald Instance Portal", 3.5f },
+        // trainers & npcs
+        { "npc-banker", 5060, "Banker", 2.5f, true },
+        { "npc-vendor", 32477, "General Goods & Repairs", 2.5f, true },
+        { "npc-reagents", 29537, "Reagents & Poisons", 2.5f, true },
+        { "npc-innkeeper", 29532, "Innkeeper (Hearthstone)", 2.5f, true },
+        { "npc-auctioneer", 9858, "Auctioneer", 2.5f, true },
+        { "trainer-warrior", 26332, "Warrior Trainer", 2.5f, true },
+        { "trainer-paladin", 26327, "Paladin Trainer", 2.5f, true },
+        { "trainer-hunter", 26325, "Hunter Trainer", 2.5f, true },
+        { "trainer-rogue", 26329, "Rogue Trainer", 2.5f, true },
+        { "trainer-priest", 26328, "Priest Trainer", 2.5f, true },
+        { "trainer-deathknight", 29195, "Death Knight Trainer", 2.5f, true },
+        { "trainer-shaman", 26330, "Shaman Trainer", 2.5f, true },
+        { "trainer-mage", 26326, "Mage Trainer", 2.5f, true },
+        { "trainer-warlock", 26331, "Warlock Trainer", 2.5f, true },
+        { "trainer-druid", 26324, "Druid Trainer", 2.5f, true },
+        { "trainer-alchemy", 28703, "Alchemy Trainer", 2.5f, true },
+        { "trainer-blacksmith", 28694, "Blacksmithing Trainer", 2.5f, true },
+        { "trainer-enchanting", 28693, "Enchanting Trainer", 2.5f, true },
+        { "trainer-engineering", 28697, "Engineering Trainer", 2.5f, true },
+        { "trainer-inscription", 28702, "Inscription Trainer", 2.5f, true },
+        { "trainer-jewelcrafting", 28701, "Jewelcrafting Trainer", 2.5f, true },
+        { "trainer-leatherworking", 28700, "Leatherworking Trainer", 2.5f, true },
+        { "trainer-tailoring", 28699, "Tailoring Trainer", 2.5f, true },
+        { "trainer-cooking", 28705, "Cooking Trainer", 2.5f, true },
+        { "trainer-firstaid", 28706, "First Aid Trainer", 2.5f, true },
+        { "trainer-fishing", 28742, "Fishing Trainer", 2.5f, true },
+        { "trainer-mining", 28698, "Mining Trainer", 2.5f, true },
+        { "trainer-herbalism", 28704, "Herbalism Trainer", 2.5f, true },
+        { "trainer-skinning", 28696, "Skinning Trainer", 2.5f, true },
+        { "trainer-flying", 31238, "Flying Trainer", 2.5f, true },
     };
 
     std::vector<PropDef> g_props;
@@ -197,6 +341,19 @@ namespace
 
         for (PropDef const& def : g_propCatalogue)
         {
+            if (def.isCreature)
+            {
+                CreatureTemplate const* ctpl = sObjectMgr->GetCreatureTemplate(def.entry);
+                if (!ctpl)
+                {
+                    LOG_WARN("server", "[warbandcamp] npc '{}' entry {} has no creature_template - dropped",
+                        def.key, def.entry);
+                    continue;
+                }
+                g_props.push_back(def);
+                continue;
+            }
+
             GameObjectTemplate const* tpl =
                 sObjectMgr->GetGameObjectTemplate(def.entry);
             if (!tpl)
@@ -278,7 +435,12 @@ namespace
 
     std::unordered_map<uint32, time_t> g_goCooldown;
     std::unordered_map<uint32, time_t> g_propCooldown;
-    std::unordered_map<uint32, uint64> g_lastPlacedProp;
+    struct LastPlaced
+    {
+        uint64 id = 0;
+        bool isCreature = false;
+    };
+    std::unordered_map<uint32, LastPlaced> g_lastPlacedProp;
 
     // ---------------------------------------------------------------------
     // Warband Alts
@@ -946,6 +1108,9 @@ public:
         if (QueryResult r = CharacterDatabase.Query(
                 "SELECT COUNT(*) FROM mod_warband_camp_object WHERE account_id = {}", c.accountId))
             props = r->Fetch()[0].Get<uint32>();
+        if (QueryResult rc = CharacterDatabase.Query(
+                "SELECT COUNT(*) FROM mod_warband_camp_creature WHERE account_id = {}", c.accountId))
+            props += rc->Fetch()[0].Get<uint32>();
 
         char const* privStr = "Public";
         if (c.privacy == PRIVACY_PARTY)
@@ -1287,6 +1452,17 @@ public:
             }
         }
 
+        // NPC single-instance check per camp
+        if (def->isCreature)
+        {
+            if (QueryResult cr = CharacterDatabase.Query(
+                    "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} AND entry = {} LIMIT 1", accountId, def->entry))
+            {
+                handler->PSendSysMessage("You already have |cffffff00{}|r in your camp. (Limit: 1)", def->label);
+                return true;
+            }
+        }
+
         if (me->GetMapId() != campMap ||
             Dist2D(camp.x, camp.y, me->GetPositionX(), me->GetPositionY()) > CAMP_PROP_RADIUS)
         {
@@ -1304,6 +1480,9 @@ public:
         if (QueryResult r = CharacterDatabase.Query(
                 "SELECT COUNT(*) FROM mod_warband_camp_object WHERE account_id = {}", accountId))
             count = r->Fetch()[0].Get<uint32>();
+        if (QueryResult rc = CharacterDatabase.Query(
+                "SELECT COUNT(*) FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
+            count += rc->Fetch()[0].Get<uint32>();
 
         uint32 const maxProps = g_maxProps.load();
         if (maxProps && count >= maxProps)
@@ -1323,6 +1502,8 @@ public:
 
         Map* map = me->GetMap();
         float o = me->GetOrientation();
+        if (def->isCreature)
+            o += float(M_PI);
 
         // Apply custom rotation offset if supplied
         if (angleDeg)
@@ -1355,6 +1536,44 @@ public:
                 z = groundZ;
         }
 
+        if (def->isCreature)
+        {
+            CharacterDatabase.DirectExecute(
+                "INSERT INTO mod_warband_camp_creature "
+                "(account_id, entry, pos_x, pos_y, pos_z, orientation) "
+                "VALUES ({}, {}, {:.4f}, {:.4f}, {:.4f}, {:.4f})",
+                accountId, def->entry, x, y, z, o);
+
+            uint64 id = 0;
+            if (QueryResult r = CharacterDatabase.Query(
+                    "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} ORDER BY id DESC LIMIT 1", accountId))
+                id = r->Fetch()[0].Get<uint64>();
+
+            if (!id)
+            {
+                handler->SendSysMessage("That could not be saved. Please tell an administrator.");
+                return true;
+            }
+
+            ObjectGuid const guid = SpawnCampCreature(map, def->entry, x, y, z, o, 1u << campPhaseBit);
+            if (!guid)
+            {
+                CharacterDatabase.DirectExecute(
+                    "DELETE FROM mod_warband_camp_creature WHERE id = {}", id);
+                handler->SendSysMessage("That would not stand up here. Try a step to one side.");
+                return true;
+            }
+
+            g_liveCreatures[id] = guid;
+            g_lastPlacedProp[accountId] = { id, true };
+            g_propCooldown[accountId] = now + CAMP_PROP_COOLDOWN_SECONDS;
+            if (maxProps)
+                handler->PSendSysMessage("|cffffff00{}|r stationed ({} of {}).", def->label, count + 1, maxProps);
+            else
+                handler->PSendSysMessage("|cffffff00{}|r stationed ({} so far).", def->label, count + 1);
+            return true;
+        }
+
         CharacterDatabase.DirectExecute(
             "INSERT INTO mod_warband_camp_object "
             "(account_id, entry, pos_x, pos_y, pos_z, orientation) "
@@ -1384,7 +1603,7 @@ public:
         }
 
         g_liveProps[id] = guid;
-        g_lastPlacedProp[accountId] = id;
+        g_lastPlacedProp[accountId] = { id, false };
         g_propCooldown[accountId] = now + CAMP_PROP_COOLDOWN_SECONDS;
         if (maxProps)
             handler->PSendSysMessage("|cffffff00{}|r set up ({} of {}).", def->label, count + 1, maxProps);
@@ -1410,15 +1629,35 @@ public:
         }
 
         uint64 targetId = 0;
+        bool isCreature = false;
         auto const it = g_lastPlacedProp.find(accountId);
-        if (it != g_lastPlacedProp.end() && it->second != 0)
-            targetId = it->second;
+        if (it != g_lastPlacedProp.end() && it->second.id != 0)
+        {
+            targetId = it->second.id;
+            isCreature = it->second.isCreature;
+        }
 
         if (!targetId)
         {
+            uint64 objId = 0;
+            uint64 crId = 0;
             if (QueryResult r = CharacterDatabase.Query(
                     "SELECT id FROM mod_warband_camp_object WHERE account_id = {} ORDER BY id DESC LIMIT 1", accountId))
-                targetId = r->Fetch()[0].Get<uint64>();
+                objId = r->Fetch()[0].Get<uint64>();
+            if (QueryResult rc = CharacterDatabase.Query(
+                    "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} ORDER BY id DESC LIMIT 1", accountId))
+                crId = rc->Fetch()[0].Get<uint64>();
+
+            if (crId > objId)
+            {
+                targetId = crId;
+                isCreature = true;
+            }
+            else
+            {
+                targetId = objId;
+                isCreature = false;
+            }
         }
 
         if (!targetId)
@@ -1428,13 +1667,26 @@ public:
         }
 
         uint32 entry = 0;
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT entry FROM mod_warband_camp_object WHERE id = {}", targetId))
-            entry = r->Fetch()[0].Get<uint32>();
+        if (isCreature)
+        {
+            if (QueryResult r = CharacterDatabase.Query(
+                    "SELECT entry FROM mod_warband_camp_creature WHERE id = {}", targetId))
+                entry = r->Fetch()[0].Get<uint32>();
 
-        DespawnProp(me->GetMap(), targetId);
-        CharacterDatabase.DirectExecute(
-            "DELETE FROM mod_warband_camp_object WHERE id = {}", targetId);
+            DespawnCampCreature(me->GetMap(), targetId);
+            CharacterDatabase.DirectExecute(
+                "DELETE FROM mod_warband_camp_creature WHERE id = {}", targetId);
+        }
+        else
+        {
+            if (QueryResult r = CharacterDatabase.Query(
+                    "SELECT entry FROM mod_warband_camp_object WHERE id = {}", targetId))
+                entry = r->Fetch()[0].Get<uint32>();
+
+            DespawnProp(me->GetMap(), targetId);
+            CharacterDatabase.DirectExecute(
+                "DELETE FROM mod_warband_camp_object WHERE id = {}", targetId);
+        }
 
         g_lastPlacedProp.erase(accountId);
 
@@ -1471,9 +1723,12 @@ public:
             return true;
         }
 
-        QueryResult r = CharacterDatabase.Query(
+        QueryResult ro = CharacterDatabase.Query(
             "SELECT id, entry, pos_x, pos_y FROM mod_warband_camp_object WHERE account_id = {}", accountId);
-        if (!r)
+        QueryResult rc = CharacterDatabase.Query(
+            "SELECT id, entry, pos_x, pos_y FROM mod_warband_camp_creature WHERE account_id = {}", accountId);
+
+        if (!ro && !rc)
         {
             handler->SendSysMessage("There is nothing set up here yet.");
             return true;
@@ -1481,20 +1736,44 @@ public:
 
         uint64 bestId = 0;
         uint32 bestEntry = 0;
+        bool bestIsCreature = false;
         float bestDist = 10.0f;
-        do
+
+        if (ro)
         {
-            Field* f = r->Fetch();
-            float const d = Dist2D(f[2].Get<float>(), f[3].Get<float>(),
-                me->GetPositionX(), me->GetPositionY());
-            if (d < bestDist)
+            do
             {
-                bestDist = d;
-                bestId = f[0].Get<uint64>();
-                bestEntry = f[1].Get<uint32>();
+                Field* f = ro->Fetch();
+                float const d = Dist2D(f[2].Get<float>(), f[3].Get<float>(),
+                    me->GetPositionX(), me->GetPositionY());
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    bestId = f[0].Get<uint64>();
+                    bestEntry = f[1].Get<uint32>();
+                    bestIsCreature = false;
+                }
             }
+            while (ro->NextRow());
         }
-        while (r->NextRow());
+
+        if (rc)
+        {
+            do
+            {
+                Field* f = rc->Fetch();
+                float const d = Dist2D(f[2].Get<float>(), f[3].Get<float>(),
+                    me->GetPositionX(), me->GetPositionY());
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    bestId = f[0].Get<uint64>();
+                    bestEntry = f[1].Get<uint32>();
+                    bestIsCreature = true;
+                }
+            }
+            while (rc->NextRow());
+        }
 
         if (!bestId)
         {
@@ -1502,11 +1781,21 @@ public:
             return true;
         }
 
-        DespawnProp(me->GetMap(), bestId);
-        CharacterDatabase.DirectExecute(
-            "DELETE FROM mod_warband_camp_object WHERE id = {}", bestId);
+        if (bestIsCreature)
+        {
+            DespawnCampCreature(me->GetMap(), bestId);
+            CharacterDatabase.DirectExecute(
+                "DELETE FROM mod_warband_camp_creature WHERE id = {}", bestId);
+        }
+        else
+        {
+            DespawnProp(me->GetMap(), bestId);
+            CharacterDatabase.DirectExecute(
+                "DELETE FROM mod_warband_camp_object WHERE id = {}", bestId);
+        }
 
-        if (g_lastPlacedProp[accountId] == bestId)
+        auto const it = g_lastPlacedProp.find(accountId);
+        if (it != g_lastPlacedProp.end() && it->second.id == bestId)
             g_lastPlacedProp.erase(accountId);
 
         char const* label = "It";
@@ -1555,7 +1844,7 @@ public:
         if (action == "remove")
         {
             if (QueryResult r = CharacterDatabase.Query(
-                    "SELECT id FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
+                    "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} AND entry IN (31143, 31144, 31146)", accountId))
             {
                 do
                 {
@@ -1565,7 +1854,7 @@ public:
             }
 
             CharacterDatabase.DirectExecute(
-                "DELETE FROM mod_warband_camp_creature WHERE account_id = {}", accountId);
+                "DELETE FROM mod_warband_camp_creature WHERE account_id = {} AND entry IN (31143, 31144, 31146)", accountId);
             handler->SendSysMessage("Training Dummy packed away.");
             return true;
         }
@@ -1585,7 +1874,7 @@ public:
 
         // Despawn existing dummy if any
         if (QueryResult r = CharacterDatabase.Query(
-                "SELECT id FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
+                "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} AND entry IN (31143, 31144, 31146)", accountId))
         {
             do
             {
@@ -1594,7 +1883,7 @@ public:
             while (r->NextRow());
         }
         CharacterDatabase.DirectExecute(
-            "DELETE FROM mod_warband_camp_creature WHERE account_id = {}", accountId);
+            "DELETE FROM mod_warband_camp_creature WHERE account_id = {} AND entry IN (31143, 31144, 31146)", accountId);
 
         float const x = me->GetPositionX() + std::cos(me->GetOrientation()) * 3.0f;
         float const y = me->GetPositionY() + std::sin(me->GetOrientation()) * 3.0f;
