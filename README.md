@@ -27,9 +27,10 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
   - Each camp is allocated a dynamic phase bit (1 to 31).
   - Up to 31 distinct camps can coexist within 600 yards of each other; phase bits are reused beyond 600 yards across the realm.
   - Stepping within 40 yards seamlessly phases the player into `PHASEMASK_NORMAL | (1 << campBit)`. Players continue viewing normal world terrain, buildings, NPCs, and regular players.
-- **50+ Stock 3.3.5a Scenery Props**:
-  - Tents (Alliance, Horde, neutral, large), campfires, bonfires, braziers, lanterns, tables, chairs, benches, rugs, bookshelves, crates, barrels, kegs, cauldrons, wagons, haystacks, fences, anvils, forges, banners, skulls, totems, outhouses, doghouses, pavilions, and cottages.
-  - All scenery objects are inert type-5 generic gameobjects (`GAMEOBJECT_TYPE_GENERIC`) validated against `GameObjectDisplayInfo.dbc` on startup.
+- **100+ Stock 3.3.5a Scenery Props & Camp NPCs**:
+  - Extensive furniture, beds, chairs, tables, rugs, bookcases, wardrobes, lights, braziers, fire bowls, food platters, harvest crates, barrels, chests, garden flora, trees, portals, and faction banners.
+  - Camp service NPCs & trainers: Banker, Vendor/Repairs, Reagents, Innkeeper, Auctioneer, class trainers, and profession trainers.
+  - Inert scenery objects are validated against `GameObjectDisplayInfo.dbc` and NPCs against `creature_template` on startup.
 - **Rested XP and Instant Logout**:
   - Standing inside your camp perimeter grants resting status (`REST_FLAG_IN_TAVERN`), allowing instant logout without the 20-second timer, and accumulates Rested XP while logged off.
 - **Personal Camp Mailbox**:
@@ -72,6 +73,7 @@ mod-warband-camp/
 ├── src/
 │   ├── mod_warband_camp_loader.cpp      # Script loader entry point
 │   └── warband_camp.cpp                 # Core C++ implementation
+├── CMakeLists.txt                       # Build script
 ├── assets/                              # Documentation media
 ├── acore-module.json                    # Module metadata
 ├── include.sh                           # Build script hook
