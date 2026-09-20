@@ -153,7 +153,7 @@ local function createMainFrame()
     f:HookScript("OnShow", updateTarget)
     f.header = header
 
-    -- Footer: command-category legend.
+    -- Footer: command-category legend & manual command bar
     local footer = CreateFrame("Frame", nil, f)
     footer:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8, 4)
     footer:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 4)
