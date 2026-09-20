@@ -27,9 +27,10 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
   - Each camp is allocated a dynamic phase bit (1 to 31).
   - Up to 31 distinct camps can coexist within 600 yards of each other; phase bits are reused beyond 600 yards across the realm.
   - Stepping within 40 yards seamlessly phases the player into `PHASEMASK_NORMAL | (1 << campBit)`. Players continue viewing normal world terrain, buildings, NPCs, and regular players.
-- **50+ Stock 3.3.5a Scenery Props**:
-  - Tents (Alliance, Horde, neutral, large), campfires, bonfires, braziers, lanterns, tables, chairs, benches, rugs, bookshelves, crates, barrels, kegs, cauldrons, wagons, haystacks, fences, anvils, forges, banners, skulls, totems, outhouses, doghouses, pavilions, and cottages.
-  - All scenery objects are inert type-5 generic gameobjects (`GAMEOBJECT_TYPE_GENERIC`) validated against `GameObjectDisplayInfo.dbc` on startup.
+- **100+ Stock 3.3.5a Scenery Props & Camp NPCs**:
+  - Extensive furniture, beds, chairs, tables, rugs, bookcases, wardrobes, lights, braziers, fire bowls, food platters, harvest crates, barrels, chests, garden flora, trees, portals, and faction banners.
+  - Camp service NPCs & trainers: Banker, Vendor/Repairs, Reagents, Innkeeper, Auctioneer, class trainers, and profession trainers.
+  - Inert scenery objects are validated against `GameObjectDisplayInfo.dbc` and NPCs against `creature_template` on startup.
 - **Rested XP and Instant Logout**:
   - Standing inside your camp perimeter grants resting status (`REST_FLAG_IN_TAVERN`), allowing instant logout without the 20-second timer, and accumulates Rested XP while logged off.
 - **Personal Camp Mailbox**:
@@ -55,6 +56,10 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
   - When `mod-playerbots` is installed, `.camp alts` and `WarbandCamp.AutoAlts` rouse the player's offline alts to gather around the campfire and stroll along the perimeter.
   - Logging into a parked alt restores the character to their previous location in the world.
   - Zero hard dependencies: If `mod-playerbots` is not present, the module compiles and runs cleanly.
+- **Integrated In-Game Client UI (`QOLAddon`) with GOMove Tools**:
+  - Bundled in-game UI addon (`Addon/QOLAddon`) with dedicated GOMove tab and interactive 3D model browser.
+  - Full camp management UI: claim, teleport, customize, and place 100+ props and NPCs.
+  - Real-time GameObject manipulation: nudge, rotate, scale, ground-target placement spell (Spell ID: 27651), and nearby target selection.
 - **Integrated GOMove GameObject Management**:
   - In-game GameObject placement, directional nudging (compass, axis, rotation), scaling, and deletion.
   - Search `gameobject_template` with 3D model preview via `.gomovesearch`.
@@ -68,6 +73,12 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
 
 ```
 mod-warband-camp/
+├── Addon/
+│   └── QOLAddon/                        # Client-side UI addon (WotLK 3.3.5a with GOMove)
+│       ├── Core/                        # Command runner & GOMove client controller
+│       ├── Data/                        # Prop & NPC definitions (WarbandProps.lua)
+│       ├── UI/                          # Tabbed interface, 3D browser, & widgets
+│       └── QOLAddon.toc                 # Addon manifest (QOLAddon_DB, GOMoveSV)
 ├── conf/
 │   └── mod_warband_camp.conf.dist       # Module configuration template
 ├── data/
@@ -99,7 +110,7 @@ mod-warband-camp/
 1. Clone this repository into your AzerothCore `modules/` directory:
    ```bash
    cd azerothcore-wotlk/modules
-   git clone https://github.com/Ildourol/mod-warband-camp.git
+   git clone -b gomove https://github.com/Ildourol/mod-warband-camp.git
    ```
 
 2. Re-generate CMake and compile the core:
@@ -120,7 +131,20 @@ mod-warband-camp/
    - Alternatively, import manually if desired:
      ```bash
      mysql -u acore -p acore_characters < ../modules/mod-warband-camp/data/sql/db-characters/base/mod_warband_camp.sql
+     mysql -u acore -p acore_characters < ../modules/mod-warband-camp/data/sql/db-characters/base/mod_gomove_characters.sql
+     mysql -u acore -p acore_world < ../modules/mod-warband-camp/data/sql/db-world/base/mod_gomove.sql
      ```
+
+5. Client Addon Installation:
+   - Copy the bundled `Addon/QOLAddon` folder into your World of Warcraft client directory:
+     ```
+     World of Warcraft/
+     └── Interface/
+         └── AddOns/
+             └── QOLAddon/
+     ```
+   - Ensure `QOLAddon` is enabled in your client's AddOns menu at the character selection screen.
+   - Open the interface in-game by clicking the mini toggle button or by typing `/qol`. Use the **GOMove** tab for in-game GameObject spawning and 3D browsing.
 
 ---
 
@@ -176,7 +200,7 @@ Detailed configuration options are documented in `conf/mod_warband_camp.conf.dis
 - **Client**: World of Warcraft: Wrath of the Lich King (3.3.5a - Build 12340)
 - Compatible with:
   - [mod-playerbots](https://github.com/liyunfan1223/mod-playerbots)
-  - [QOLAddon](https://github.com/Ildourol/QOLAddon)
+  - Bundled `QOLAddon` with GOMove support (included under `Addon/QOLAddon`)
 
 ---
 

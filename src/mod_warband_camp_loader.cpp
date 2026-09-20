@@ -14,3 +14,8 @@ void Addmod_warband_campScripts()
     AddWarbandCampScripts();
     AddSC_GOMove_commandscript();
 }
+
+void Addmod_warband_camp_gomoveScripts()
+{
+    Addmod_warband_campScripts();
+}
