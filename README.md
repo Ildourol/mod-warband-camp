@@ -56,6 +56,10 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
   - When `mod-playerbots` is installed, `.camp alts` and `WarbandCamp.AutoAlts` rouse the player's offline alts to gather around the campfire and stroll along the perimeter.
   - Logging into a parked alt restores the character to their previous location in the world.
   - Zero hard dependencies: If `mod-playerbots` is not present, the module compiles and runs cleanly.
+- **Integrated In-Game Client UI (`QOLAddon`)**:
+  - Bundled in-game UI addon (`Addon/QOLAddon`) for Wrath of the Lich King 3.3.5a.
+  - Interactive camp management: claim, teleport, visit, configure privacy, set greeting messages, and place props/NPCs directly from categorized dropdowns.
+  - Integrated AI companion bot controls and dungeon clearing automation.
 
 ---
 
@@ -63,6 +67,12 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
 
 ```
 mod-warband-camp/
+├── Addon/
+│   └── QOLAddon/                        # Client-side UI addon (WotLK 3.3.5a)
+│       ├── Core/                        # Command dispatcher & state management
+│       ├── Data/                        # Prop & NPC definitions (WarbandProps.lua)
+│       ├── UI/                          # Tabbed interface & widgets
+│       └── QOLAddon.toc                 # Addon manifest
 ├── conf/
 │   └── mod_warband_camp.conf.dist       # Module configuration template
 ├── data/
@@ -109,6 +119,17 @@ mod-warband-camp/
      ```bash
      mysql -u acore -p acore_characters < ../modules/mod-warband-camp/data/sql/db-characters/base/mod_warband_camp.sql
      ```
+
+5. Client Addon Installation:
+   - Copy the bundled `Addon/QOLAddon` folder into your World of Warcraft client directory:
+     ```
+     World of Warcraft/
+     └── Interface/
+         └── AddOns/
+             └── QOLAddon/
+     ```
+   - Ensure `QOLAddon` is enabled in your client's AddOns menu at the character selection screen.
+   - Open the interface in-game by clicking the mini toggle button or by typing `/qol`.
 
 ---
 
@@ -162,7 +183,7 @@ Detailed configuration options are documented in `conf/mod_warband_camp.conf.dis
 - **Client**: World of Warcraft: Wrath of the Lich King (3.3.5a - Build 12340)
 - Compatible with:
   - [mod-playerbots](https://github.com/liyunfan1223/mod-playerbots)
-  - [QOLAddon](https://github.com/Ildourol/QOLAddon)
+  - Bundled `QOLAddon` (included under `Addon/QOLAddon`)
 
 ---
 
