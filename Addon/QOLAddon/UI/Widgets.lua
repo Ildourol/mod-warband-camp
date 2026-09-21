@@ -159,27 +159,70 @@ function QOL.CreateChoice(parent, w, h, choices, placeholder, onSelect)
             menu:SetFrameStrata("FULLSCREEN_DIALOG")
             menu:EnableMouse(true)
             QOL.ApplyBackdrop(menu, "inset", 0.98, 0.05, 0.07, 0.10)
-            menu:Hide(); menu._btns = {}; c.menu = menu
-        end
-        for _, b in ipairs(menu._btns) do b:Hide() end
-        local maxw, y = w, -4
-        for i, opt in ipairs(c.choices) do
-            local text = type(opt) == "table" and opt.text or opt
-            local val  = type(opt) == "table" and opt.value or opt
-            local b = menu._btns[i]
-            if not b then b = QOL.MakeFlatButton(menu, w - 8, 18, "", { padLeft = 6 }); menu._btns[i] = b end
-            b:ClearAllPoints(); b:SetPoint("TOPLEFT", menu, "TOPLEFT", 4, y)
-            b.label:SetText(text); b._val = val; b:Show()
-            b:SetScript("OnClick", function(self)
-                c.SetValue(self._val); closeChoiceMenu()
-                if onSelect then onSelect(self._val) end
+            menu:Hide(); menu._btns = {}; menu._offset = 0; c.menu = menu
+
+            menu:EnableMouseWheel(true)
+            menu:SetScript("OnMouseWheel", function(self, delta)
+                local maxOffset = math.max(0, #c.choices - 15)
+                if maxOffset == 0 then return end
+                self._offset = math.max(0, math.min(maxOffset, (self._offset or 0) - delta * 3))
+                self.render()
             end)
-            local tw = (b.label:GetStringWidth() or 0) + 28
-            if tw > maxw then maxw = tw end
-            y = y - 20
         end
-        menu:SetWidth(math.max(w, maxw)); menu:SetHeight(-y + 6)
-        for _, b in ipairs(menu._btns) do b:SetWidth(menu:GetWidth() - 8) end
+
+        local maxw = w
+        for _, opt in ipairs(c.choices) do
+            local text = type(opt) == "table" and opt.text or opt
+            local tw = 28
+            if menu._btns[1] and menu._btns[1].label then
+                local oldText = menu._btns[1].label:GetText()
+                menu._btns[1].label:SetText(text)
+                tw = (menu._btns[1].label:GetStringWidth() or 0) + 32
+                menu._btns[1].label:SetText(oldText)
+            else
+                tw = (#tostring(text) * 8) + 32
+            end
+            if tw > maxw then maxw = tw end
+        end
+
+        local visibleCount = math.min(#c.choices, 15)
+        local btnWidth = math.max(w, maxw)
+        menu:SetWidth(btnWidth + 8)
+        menu:SetHeight(visibleCount * 20 + 8)
+
+        local function render()
+            local offset = menu._offset or 0
+            for i = 1, 15 do
+                local optIdx = offset + i
+                local opt = c.choices[optIdx]
+                local b = menu._btns[i]
+                if not b then
+                    b = QOL.MakeFlatButton(menu, btnWidth, 18, "", { padLeft = 6 })
+                    menu._btns[i] = b
+                end
+                b:SetWidth(btnWidth)
+                b:ClearAllPoints()
+                b:SetPoint("TOPLEFT", menu, "TOPLEFT", 4, -4 - (i - 1) * 20)
+
+                if opt then
+                    local text = type(opt) == "table" and opt.text or opt
+                    local val  = type(opt) == "table" and opt.value or opt
+                    b.label:SetText(text)
+                    b._val = val
+                    b:SetScript("OnClick", function(self)
+                        c.SetValue(self._val)
+                        closeChoiceMenu()
+                        if onSelect then onSelect(self._val) end
+                    end)
+                    b:Show()
+                else
+                    b:Hide()
+                end
+            end
+        end
+        menu.render = render
+        menu._offset = 0
+        render()
     end
 
     c:SetScript("OnClick", function(self)

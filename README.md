@@ -1,4 +1,4 @@
-# Warband Camp for AzerothCore (mod-warband-camp)
+# Warband Camp & GOMove for AzerothCore (mod-warband-camp-gomove)
 
 <p align="center">
   <img src="assets/banner.png" alt="Warband Camp Banner" width="850">
@@ -6,17 +6,17 @@
 
 <p align="center">
   <a href="https://github.com/azerothcore/azerothcore-wotlk"><img src="https://img.shields.io/badge/AzerothCore-WotLK%203.3.5a-blue.svg" alt="AzerothCore"></a>
-  <a href="https://github.com/Ildourol/mod-warband-camp/blob/master/conf/mod_warband_camp.conf.dist"><img src="https://img.shields.io/badge/Configuration-Fully%20Configurable-brightgreen.svg" alt="Configurable"></a>
-  <a href="https://github.com/Ildourol/mod-warband-camp/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-GNU%20AGPL%20v3-lightgrey.svg" alt="License"></a>
+  <a href="https://github.com/Ildourol/mod-warband-camp/blob/gomove/conf/mod_warband_camp.conf.dist"><img src="https://img.shields.io/badge/Configuration-Fully%20Configurable-brightgreen.svg" alt="Configurable"></a>
+  <a href="https://github.com/Ildourol/mod-warband-camp/blob/gomove/LICENSE"><img src="https://img.shields.io/badge/License-GNU%20AGPL%20v3-lightgrey.svg" alt="License"></a>
 </p>
 
 ---
 
 ## Description
 
-**mod-warband-camp** is a standalone player housing, open-world campsite, and warband module for AzerothCore (WotLK 3.3.5a).
+**mod-warband-camp-gomove** is an extended player housing, open-world campsite, warband, and in-game GameObject manipulation module for AzerothCore (WotLK 3.3.5a).
 
-A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a single character. Every character you create shares the same campsite, and visiting players can explore what you have designed and built.
+It combines the full **Warband Camp** system (account-wide campsite, custom phasing, camp customization) with integrated **GOMove** engine support, allowing Game Masters and world builders to spawn, move, rotate, scale, and browse 3D GameObjects in real time with interactive UI tools.
 
 ---
 
@@ -27,10 +27,21 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
   - Each camp is allocated a dynamic phase bit (1 to 31).
   - Up to 31 distinct camps can coexist within 600 yards of each other; phase bits are reused beyond 600 yards across the realm.
   - Stepping within 40 yards seamlessly phases the player into `PHASEMASK_NORMAL | (1 << campBit)`. Players continue viewing normal world terrain, buildings, NPCs, and regular players.
-- **100+ Stock 3.3.5a Scenery Props & Camp NPCs**:
-  - Extensive furniture, beds, chairs, tables, rugs, bookcases, wardrobes, lights, braziers, fire bowls, food platters, harvest crates, barrels, chests, garden flora, trees, portals, and faction banners.
-  - Camp service NPCs & trainers: Banker, Vendor/Repairs, Reagents, Innkeeper, Auctioneer, class trainers, and profession trainers.
+- **140+ Stock 3.3.5a Scenery Props & Camp NPCs**:
+  - Extensive tents, shelters, timber lodges, pavilions, watchtowers, furniture, beds, chairs, tables, rugs, bookcases, wardrobes, lights, braziers, fire bowls, food platters, harvest crates, barrels, chests, garden flora, trees, portals, and faction banners.
+  - New thematic categories: Defenses & Fortifications (barricades, catapults, cannons, palisades), Trophies & The Hunt (carcasses, fur hides, meat grills, beast cages), Graveyard & Dark Arts (coffins, gravestones, ritual candles, bones), and Treasures & Curios (gold sacks, gems, glowing orbs, incense burners).
+  - Camp service NPCs & trainers: Banker, Stable Master (pet care), Vendor/Repairs, Reagents, Poison & Alchemy Specialist, Camp Guards (Stormwind & Orgrimmar), Innkeeper, Auctioneer, class trainers, and profession trainers.
   - Inert scenery objects are validated against `GameObjectDisplayInfo.dbc` and NPCs against `creature_template` on startup.
+- **Integrated GOMove GameObject Management**:
+  - In-game GameObject placement, directional nudging (compass, axis, rotation), scaling, and deletion.
+  - Search `gameobject_template` with 3D model preview via `.gomovesearch`.
+  - Ground-target spell placement mode (Spell ID: 27651 - *Picnic Blanket Ritual Effect*).
+  - Automatically grants the placement spell to Game Master level accounts upon login.
+  - Per-instance GameObject scale overrides persisted across server restarts.
+- **Integrated In-Game Client UI (`QOLAddon`) with GOMove Tools**:
+  - Bundled in-game UI addon (`Addon/QOLAddon`) with dedicated GOMove tab and interactive 3D model browser.
+  - Full camp management UI: claim, teleport, customize, and place 140+ props and NPCs.
+  - Real-time GameObject manipulation: nudge, rotate, scale, ground-target placement spell (Spell ID: 27651), and nearby target selection.
 - **Rested XP and Instant Logout**:
   - Standing inside your camp perimeter grants resting status (`REST_FLAG_IN_TAVERN`), allowing instant logout without the 20-second timer, and accumulates Rested XP while logged off.
 - **Personal Camp Mailbox**:
@@ -56,23 +67,13 @@ A camp is a shared plot of land that belongs to your **ACCOUNT**, rather than a 
   - When `mod-playerbots` is installed, `.camp alts` and `WarbandCamp.AutoAlts` rouse the player's offline alts to gather around the campfire and stroll along the perimeter.
   - Logging into a parked alt restores the character to their previous location in the world.
   - Zero hard dependencies: If `mod-playerbots` is not present, the module compiles and runs cleanly.
-- **Integrated In-Game Client UI (`QOLAddon`) with GOMove Tools**:
-  - Bundled in-game UI addon (`Addon/QOLAddon`) with dedicated GOMove tab and interactive 3D model browser.
-  - Full camp management UI: claim, teleport, customize, and place 100+ props and NPCs.
-  - Real-time GameObject manipulation: nudge, rotate, scale, ground-target placement spell (Spell ID: 27651), and nearby target selection.
-- **Integrated GOMove GameObject Management**:
-  - In-game GameObject placement, directional nudging (compass, axis, rotation), scaling, and deletion.
-  - Search `gameobject_template` with 3D model preview via `.gomovesearch`.
-  - Ground-target spell placement mode (Spell ID: 27651 - *Picnic Blanket Ritual Effect*).
-  - Automatically grants the placement spell to Game Master level accounts upon login.
-  - Per-instance GameObject scale overrides persisted across server restarts.
 
 ---
 
 ## Directory Structure
 
 ```
-mod-warband-camp/
+mod-warband-camp-gomove/
 ├── Addon/
 │   └── QOLAddon/                        # Client-side UI addon (WotLK 3.3.5a with GOMove)
 │       ├── Core/                        # Command runner & GOMove client controller
@@ -110,7 +111,7 @@ mod-warband-camp/
 1. Clone this repository into your AzerothCore `modules/` directory:
    ```bash
    cd azerothcore-wotlk/modules
-   git clone -b gomove https://github.com/Ildourol/mod-warband-camp.git
+   git clone -b gomove https://github.com/Ildourol/mod-warband-camp.git mod-warband-camp-gomove
    ```
 
 2. Re-generate CMake and compile the core:
@@ -123,16 +124,16 @@ mod-warband-camp/
 
 3. Copy the configuration template:
    ```bash
-   cp ../modules/mod-warband-camp/conf/mod_warband_camp.conf.dist /path/to/server/etc/mod_warband_camp.conf
+   cp ../modules/mod-warband-camp-gomove/conf/mod_warband_camp.conf.dist /path/to/server/etc/mod_warband_camp.conf
    ```
 
 4. Database Setup:
    - Database tables are automatically verified and created in your `characters` database upon worldserver startup.
    - Alternatively, import manually if desired:
      ```bash
-     mysql -u acore -p acore_characters < ../modules/mod-warband-camp/data/sql/db-characters/base/mod_warband_camp.sql
-     mysql -u acore -p acore_characters < ../modules/mod-warband-camp/data/sql/db-characters/base/mod_gomove_characters.sql
-     mysql -u acore -p acore_world < ../modules/mod-warband-camp/data/sql/db-world/base/mod_gomove.sql
+     mysql -u acore -p acore_characters < ../modules/mod-warband-camp-gomove/data/sql/db-characters/base/mod_warband_camp.sql
+     mysql -u acore -p acore_characters < ../modules/mod-warband-camp-gomove/data/sql/db-characters/base/mod_gomove_characters.sql
+     mysql -u acore -p acore_world < ../modules/mod-warband-camp-gomove/data/sql/db-world/base/mod_gomove.sql
      ```
 
 5. Client Addon Installation:
@@ -214,4 +215,4 @@ Detailed configuration options are documented in `conf/mod_warband_camp.conf.dis
 
 ## License
 
-Released under the GNU AGPL v3 License. See [`LICENSE`](file:///C:/Users/Admin/AntigravityProfiles/Projects%20Azerothcore/Azerothcore%20modules/mod-warband-camp/LICENSE) for details.
+Released under the GNU AGPL v3 License. See [`LICENSE`](file:///C:/Users/Admin/AntigravityProfiles/Projects%20Azerothcore/Azerothcore%20modules/mod-warband-camp-gomove/LICENSE) for details.
