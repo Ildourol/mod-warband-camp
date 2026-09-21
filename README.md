@@ -27,9 +27,10 @@ It combines the full **Warband Camp** system (account-wide campsite, custom phas
   - Each camp is allocated a dynamic phase bit (1 to 31).
   - Up to 31 distinct camps can coexist within 600 yards of each other; phase bits are reused beyond 600 yards across the realm.
   - Stepping within 40 yards seamlessly phases the player into `PHASEMASK_NORMAL | (1 << campBit)`. Players continue viewing normal world terrain, buildings, NPCs, and regular players.
-- **140+ Stock 3.3.5a Scenery Props & Camp NPCs**:
-  - Extensive tents, shelters, timber lodges, pavilions, watchtowers, furniture, beds, chairs, tables, rugs, bookcases, wardrobes, lights, braziers, fire bowls, food platters, harvest crates, barrels, chests, garden flora, trees, portals, and faction banners.
-  - New thematic categories: Defenses & Fortifications (barricades, catapults, cannons, palisades), Trophies & The Hunt (carcasses, fur hides, meat grills, beast cages), Graveyard & Dark Arts (coffins, gravestones, ritual candles, bones), and Treasures & Curios (gold sacks, gems, glowing orbs, incense burners).
+- **320+ Stock 3.3.5a Scenery Props & Camp NPCs**:
+  - Extensive tents, shelters, pavilions, watchtowers, furniture, beds, chairs, tables, rugs, bookcases, wardrobes, lights, braziers, fire bowls, food platters, harvest crates, barrels, chests, garden flora, trees, portals, and faction banners.
+  - Thematic categories: Shelter, Fire & Light, Furniture, Storage & Amenities, Yard, Craft, Defenses & Fortifications, Banners, Lights, Food & Provisions, Trophies & The Hunt, Graveyard & Dark Arts, Treasures & Curios, Atmosphere, Nature, Professions, Buildings, Portals, and Trainers & NPCs.
+  - Fully deduplicated: every item has a unique command key, unique display label, unique entry ID, and unique 3D model, appearing in exactly one category.
   - Camp service NPCs & trainers: Banker, Stable Master (pet care), Vendor/Repairs, Reagents, Poison & Alchemy Specialist, Camp Guards (Stormwind & Orgrimmar), Innkeeper, Auctioneer, class trainers, and profession trainers.
   - Inert scenery objects are validated against `GameObjectDisplayInfo.dbc` and NPCs against `creature_template` on startup.
 - **Integrated GOMove GameObject Management**:
@@ -40,7 +41,7 @@ It combines the full **Warband Camp** system (account-wide campsite, custom phas
   - Per-instance GameObject scale overrides persisted across server restarts.
 - **Integrated In-Game Client UI (`QOLAddon`) with GOMove Tools**:
   - Bundled in-game UI addon (`Addon/QOLAddon`) with dedicated GOMove tab and interactive 3D model browser.
-  - Full camp management UI: claim, teleport, customize, and place 140+ props and NPCs.
+  - Full camp management UI: claim, teleport, customize, and place 320+ props and NPCs.
   - Real-time GameObject manipulation: nudge, rotate, scale, ground-target placement spell (Spell ID: 27651), and nearby target selection.
 - **Rested XP and Instant Logout**:
   - Standing inside your camp perimeter grants resting status (`REST_FLAG_IN_TAVERN`), allowing instant logout without the 20-second timer, and accumulates Rested XP while logged off.
