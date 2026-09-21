@@ -5,13 +5,18 @@
 local addonName, QOL = ...
 
 QOL.WarbandProps = {
-    catalogueVersion = "1.2.0",
+    catalogueVersion = "1.3.0",
     categories = {
         { name = "Shelter", props = {
             { "tent", "Tent" }, { "tent-a", "Alliance Tent" }, { "tent-h", "Horde Tent" },
             { "foodtent", "Food Tent" }, { "tent-dwarf", "Dwarven Tent" }, { "tent-orc", "Orc Tent" },
             { "tent-undead", "Forsaken Tent" }, { "tent-scourge", "Scourge Tent" }, { "canopy", "Open Canopy" },
-            { "tent-carnival", "Carnival Tent" },
+            { "tent-carnival", "Carnival Tent" }, { "tent-shattrath", "Shattrath Pavilion Tent" },
+            { "tent-shadow", "Shadow Council Tent" }, { "tent-goblin", "Goblin Striped Tent" },
+            { "tent-forsaken-large", "Forsaken Pavilion Tent" }, { "tent-apothecary", "Apothecary Main Tent" },
+            { "tent-wotlk-light", "Argent Light Tent" }, { "tent-orc-war", "Orc War Camp Tent" },
+            { "tent-nelf", "Night Elven Pavilion" }, { "tent-excavation", "Excavation Canopy Tent" },
+            { "tent-souvenir", "Festival Fair Tent" },
         } },
         { name = "Fire & Light", props = {
             { "campfire", "Campfire" }, { "bonfire", "Bonfire" }, { "brazier", "Brazier" },
@@ -50,6 +55,15 @@ QOL.WarbandProps = {
             { "rack-blades", "Scourge Blade Rack" }, { "grinder", "Gem Grinder" }, { "runeforge", "Scourge Runeforge" },
             { "hammer", "Smithing Hammer" },
         } },
+        { name = "Defenses & Fortifications", props = {
+            { "barricade-wood", "Reinforced Wooden Barricade" },
+            { "barricade-spikes", "Spiked Defensive Barricade" },
+            { "siege-catapult", "Horde Catapult" },
+            { "siege-cannon", "Ironclad Field Cannon" },
+            { "gate-cementery", "Cemetery Iron Gate" },
+            { "wall-rock", "Fortified Rock Wall" },
+            { "wall-spike", "Spiked Palisade Wall" },
+        } },
         { name = "Banners", props = {
             { "banner", "Banner" }, { "banner-a", "Alliance Banner" }, { "banner-h", "Horde Banner" },
             { "banner-sw", "Stormwind Banner" }, { "banner-org", "Orgrimmar Banner" }, { "banner-if", "Ironforge Banner" },
@@ -69,6 +83,32 @@ QOL.WarbandProps = {
             { "fishplatter", "Fish Platter" }, { "fruitbowl", "Fruit Bowl" }, { "apples", "Basket of Apples" },
             { "campjug", "Camp Jug" }, { "campmug", "Camp Mug" }, { "breadslice", "Sliced Bread" },
             { "tacklebox", "Tackle Box" },
+        } },
+        { name = "Trophies & The Hunt", props = {
+            { "carcass-fresh", "Hanging Hunt Carcass" },
+            { "meat-rancid", "Cured Game Meat" },
+            { "fur-quality", "High Quality Fur Hide" },
+            { "meat-wagon-grill", "Smoker & Roasting Grill" },
+            { "cage-bear", "Reinforced Beast Cage" },
+        } },
+        { name = "Graveyard & Dark Arts", props = {
+            { "coffin-musty", "Musty Coffin" },
+            { "coffin-sealed", "Sealed Crypt Coffin" },
+            { "gravestone-moss", "Mossy Gravestone" },
+            { "skull-candle", "Ritual Skull Candle" },
+            { "skull-hanging", "Hanging Skull Lantern" },
+            { "skull-voodoo", "Voodoo Skull Pile" },
+            { "bones-frozen", "Frozen Scourge Remains" },
+            { "bones-pile", "Bone Pile" },
+        } },
+        { name = "Treasures & Curios", props = {
+            { "gold-sack", "Sack of Gold" },
+            { "gem-rock", "Precious Gem Cluster" },
+            { "goblet-golden", "Ornate Golden Goblet" },
+            { "orb-magic-blue", "Nexus Arcane Orb" },
+            { "orb-invention", "Gnomish Invention Orb" },
+            { "orb-apothecary", "Apothecary Glowing Orb" },
+            { "incense-burner", "Ornate Incense Burner" },
         } },
         { name = "Atmosphere", props = {
             { "skull", "Skull" }, { "totem", "Totem" }, { "gong", "Gong" },
@@ -96,6 +136,11 @@ QOL.WarbandProps = {
             { "bigtent", "Large Tent" }, { "stable", "Stable" }, { "doghouse", "Doghouse" },
             { "outhouse", "Outhouse" }, { "pavilion-dwarf", "Dwarven Pavilion" }, { "pavilion-orc", "Orc War Pavilion" },
             { "hut-murloc", "Tribal Thatched Hut" }, { "hut-stilt", "Stilt Water Hut" }, { "booth", "Carnival Booth" },
+            { "lodge-amberpine", "Amberpine Timber Lodge" }, { "lodge-spirit", "Spirit Lodge Hall" },
+            { "lodge-darkbriar", "Darkbriar Thatched Lodge" }, { "tower-skytower", "Tauren Sky Tower" },
+            { "tower-guard", "Alliance Guard Tower" }, { "tower-orc", "Horde Watch Tower" },
+            { "building-shack", "Rustic Wood Shack" }, { "building-chophouse", "Frontier Meat House" },
+            { "building-slaughter", "Warsong Outpost Hall" }, { "pavilion-argent", "Argent Tournament Pavilion" },
         } },
         { name = "Portals", props = {
             { "portal-sw", "Stormwind Portal" }, { "portal-org", "Orgrimmar Portal" }, { "portal-dal", "Dalaran Portal" },
@@ -103,7 +148,10 @@ QOL.WarbandProps = {
         } },
         { name = "Trainers & NPCs", props = {
             { "npc-banker", "Banker" }, { "npc-vendor", "General Goods & Repairs" }, { "npc-reagents", "Reagents & Poisons" },
-            { "npc-innkeeper", "Innkeeper (Hearthstone)" }, { "npc-auctioneer", "Auctioneer" }, { "trainer-warrior", "Warrior Trainer" },
+            { "npc-innkeeper", "Innkeeper (Hearthstone)" }, { "npc-auctioneer", "Auctioneer" },
+            { "npc-stablemaster", "Stable Master (Pet Care)" }, { "npc-poisons", "Poison & Alchemy Specialist" },
+            { "npc-guard-sw", "Stormwind Camp Guard" }, { "npc-guard-org", "Orgrimmar Camp Guard" },
+            { "trainer-warrior", "Warrior Trainer" },
             { "trainer-paladin", "Paladin Trainer" }, { "trainer-hunter", "Hunter Trainer" }, { "trainer-rogue", "Rogue Trainer" },
             { "trainer-priest", "Priest Trainer" }, { "trainer-deathknight", "Death Knight Trainer" }, { "trainer-shaman", "Shaman Trainer" },
             { "trainer-mage", "Mage Trainer" }, { "trainer-warlock", "Warlock Trainer" }, { "trainer-druid", "Druid Trainer" },
