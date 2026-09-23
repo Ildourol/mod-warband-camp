@@ -10,10 +10,11 @@ CREATE TABLE IF NOT EXISTS `gomove_scale` (
     PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Per-instance GameObject scale overrides (mod-gomove)';
 
--- GOMove command registrations
-INSERT IGNORE INTO command (name, security, help) VALUES
-('gomove', 2, 'Syntax: .gomove <id> [guid] [arg] — GOMove addon command for spawning, moving, and deleting GameObjects.'),
-('gomovesearch', 2, 'Syntax: .gomovesearch <name|entry> — GOMove browser search. Queries gameobject_template and returns results to the addon.');
+-- GOMove command registrations (security 0 = SEC_PLAYER; camp ownership enforced server-side)
+INSERT INTO `command` (`name`, `security`, `help`) VALUES
+('gomove', 0, 'Syntax: .gomove <id> [guid] [arg] — GOMove command for camp building, spawning, moving, and deleting GameObjects.'),
+('gomovesearch', 0, 'Syntax: .gomovesearch <name|entry> — GOMove browser search. Queries gameobject_template and returns results.')
+ON DUPLICATE KEY UPDATE `security` = 0;
 
 -- Placement spell binding (spell 27651 = ground-target placement)
 INSERT IGNORE INTO spell_script_names (spell_id, ScriptName) VALUES (27651, 'spell_gomove_place');

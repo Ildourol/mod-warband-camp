@@ -164,6 +164,21 @@ local function warbandBuilder(parent)
         .. "Bigger props land further out; stand on a table to place at table height. "
         .. "You must be within 32 yd of the camp centre, on the ground.")
 
+    local gomoveBtn = QOL.MakeFlatButton(body, 200, 24, "Open 3D Camp Builder", { justify = "CENTER" })
+    gomoveBtn:SetPoint("TOPLEFT", placeHint, "BOTTOMLEFT", 0, -10)
+    gomoveBtn:SetScript("OnClick", function()
+        if QOL.SelectTabById then
+            QOL.SelectTabById("gomove")
+        end
+    end)
+    gomoveBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("3D Camp Builder & Editor", 1, 0.82, 0.30)
+        GameTooltip:AddLine("Switches to the integrated GOMove 3D editor and object browser to place, nudge, rotate, and scale camp objects in real-time.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    gomoveBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     -- ─── Facts footer ──────────────────────────────────────────────────────
     local facts = body:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     facts:SetPoint("BOTTOMLEFT", body, "BOTTOMLEFT", 8, 8)

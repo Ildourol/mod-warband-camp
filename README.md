@@ -16,7 +16,7 @@
 
 **mod-warband-camp-gomove** is an extended player housing, open-world campsite, warband, and in-game GameObject manipulation module for AzerothCore (WotLK 3.3.5a).
 
-It combines the full **Warband Camp** system (account-wide campsite, custom phasing, camp customization) with integrated **GOMove** engine support, allowing Game Masters and world builders to spawn, move, rotate, scale, and browse 3D GameObjects in real time with interactive UI tools.
+It seamlessly merges the **Warband Camp** system (account-wide campsite, custom phasing, camp customization) with the **GOMove** building engine into ONE unified camp-owned construction system. Normal players use GOMove as an interactive 3D placement and editing tool strictly for their own camp-owned objects, sharing identical database persistence, phase isolation, limits, and cleanup, while Game Masters retain unrestricted administrative world-building capabilities.
 
 ---
 
@@ -175,8 +175,8 @@ mod-warband-camp-gomove/
 | `.camp catalogue` | Game Master | Layout available props in a grid for inspection. |
 | `.camp diag <player>` | Administrator | Diagnostic verification of terrain, phases, and prop spawning. |
 | `.camp reload` | Administrator | Reload configuration and blacklists without restart. |
-| `.gomove <id> [guid] [arg]` | Game Master | GOMove core command for spawning, moving, nudging, and deleting GameObjects. |
-| `.gomovesearch <name\|entry>` | Game Master | GOMove browser search. Queries `gameobject_template` and returns results. |
+| `.gomove <id> [guid] [arg]` | Player / GM | In Camp Builder Mode (Player): spawn, nudge, rotate, scale, or remove camp-owned props. In Admin Mode (GM): manipulate persistent world GameObjects. |
+| `.gomovesearch <name\|entry>` | Player / GM | Search object templates with 3D model preview. Non-GM players are filtered to safe decor and camp props. |
 
 ---
 
@@ -187,6 +187,7 @@ Detailed configuration options are documented in `conf/mod_warband_camp.conf.dis
 | Option | Default | Description |
 | :--- | :---: | :--- |
 | `WarbandCamp.Enabled` | `1` | Enable or disable the Warband Camp system |
+| `WarbandCamp.EnableGOMoveBuilding` | `1` | Enable player camp building and editing via the GOMove interface and 3D browser |
 | `WarbandCamp.MaxProps` | `200` | Maximum number of props allowed per camp (0 = unlimited) |
 | `WarbandCamp.ViewDistance` | `40` | Yards before a camp phases into view (clamped 20–250) |
 | `WarbandCamp.AutoAlts` | `1` | Automatically wake account alts around the camp upon login |

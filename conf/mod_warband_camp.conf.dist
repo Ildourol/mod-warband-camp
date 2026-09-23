@@ -70,6 +70,13 @@ WarbandCamp.EnableMailbox = 1
 
 WarbandCamp.EnableTrainingDummy = 1
 
+#    WarbandCamp.EnableGOMoveBuilding
+#        Description: Enable GOMove advanced building tools for players inside their camp.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.EnableGOMoveBuilding = 1
+
 #    WarbandCamp.InactivityDays
 #        Description: Automatically release camps whose accounts have not logged in for X days.
 #                     0 = Disabled (camps remain indefinitely).

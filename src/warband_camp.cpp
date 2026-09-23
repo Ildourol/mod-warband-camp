@@ -54,11 +54,15 @@
 #include <unordered_set>
 #include <vector>
 
+#include "WarbandCamp.h"
+#include "GOMove.h"
+
 using namespace Acore::ChatCommands;
 
 namespace
 {
     std::atomic<bool> g_enabled{true};
+    std::atomic<bool> g_enableGOMoveBuilding{true};
 
     // ---------------------------------------------------------------------
     // Tunables
@@ -535,6 +539,7 @@ PropDef const g_propCatalogue[] =
 
     std::vector<Camp> g_camps;
     std::unordered_map<uint64, ObjectGuid> g_liveProps;
+    std::unordered_map<ObjectGuid, uint64> g_guidToPropId;
     std::unordered_map<uint64, ObjectGuid> g_liveCreatures;
 
     struct PlayerCampState
@@ -694,7 +699,7 @@ PropDef const g_propCatalogue[] =
     // Spawning (Props & Phased Creatures)
     // ---------------------------------------------------------------------
 
-    ObjectGuid SpawnProp(Map* map, uint32 entry, float x, float y, float z, float o, uint32 phaseMask)
+    ObjectGuid SpawnProp(Map* map, uint32 entry, float x, float y, float z, float o, uint32 phaseMask, float scale = 1.0f)
     {
         GameObjectTemplate const* tpl = sObjectMgr->GetGameObjectTemplate(entry);
         if (!tpl)
@@ -710,6 +715,9 @@ PropDef const g_propCatalogue[] =
             delete go;
             return ObjectGuid::Empty;
         }
+
+        if (scale > 0.0f && std::fabs(scale - 1.0f) > 0.001f)
+            go->SetObjectScale(scale);
 
         go->SetRespawnTime(0);
 
@@ -754,7 +762,7 @@ PropDef const g_propCatalogue[] =
 
         // Props
         if (QueryResult r = CharacterDatabase.Query(
-                "SELECT id, entry, pos_x, pos_y, pos_z, orientation "
+                "SELECT id, entry, pos_x, pos_y, pos_z, orientation, scale "
                 "FROM mod_warband_camp_object WHERE account_id = {}",
                 camp.accountId))
         {
@@ -763,22 +771,25 @@ PropDef const g_propCatalogue[] =
             {
                 Field* f = r->Fetch();
                 uint64 const id = f[0].Get<uint64>();
+                float const scale = (f[6].IsNull() ? 1.0f : f[6].Get<float>());
 
                 auto const it = g_liveProps.find(id);
                 if (it != g_liveProps.end())
                 {
                     if (map->GetGameObject(it->second))
                         continue;
+                    g_guidToPropId.erase(it->second);
                     g_liveProps.erase(it);
                 }
 
                 ObjectGuid const guid = SpawnProp(map, f[1].Get<uint32>(),
                     f[2].Get<float>(), f[3].Get<float>(), f[4].Get<float>(),
-                    f[5].Get<float>(), phaseMask);
+                    f[5].Get<float>(), phaseMask, scale);
 
                 if (guid)
                 {
                     g_liveProps[id] = guid;
+                    g_guidToPropId[guid] = id;
                     ++spawned;
                 }
             }
@@ -824,12 +835,18 @@ PropDef const g_propCatalogue[] =
         if (it == g_liveProps.end())
             return;
 
-        if (GameObject* go = map->GetGameObject(it->second))
-        {
-            go->SetRespawnTime(0);
-            go->Delete();
-        }
+        ObjectGuid const guid = it->second;
         g_liveProps.erase(it);
+        g_guidToPropId.erase(guid);
+
+        if (map)
+        {
+            if (GameObject* go = map->GetGameObject(guid))
+            {
+                go->SetRespawnTime(0);
+                go->Delete();
+            }
+        }
     }
 
     void DespawnCampCreature(Map* map, uint64 id)
@@ -1128,6 +1145,576 @@ PropDef const g_propCatalogue[] =
 
         if (!g.names.empty())
             g_altGathers.push_back(std::move(g));
+    }
+}
+
+// -------------------------------------------------------------------------
+// Warband Camp Public Services Implementation
+// -------------------------------------------------------------------------
+namespace WarbandCamp
+{
+    bool IsCampEnabled()
+    {
+        return g_enabled.load();
+    }
+
+    bool IsGOMoveBuildingEnabled()
+    {
+        return g_enableGOMoveBuilding.load();
+    }
+
+    uint32 GetMaxProps()
+    {
+        return g_maxProps.load();
+    }
+
+    bool HasCamp(uint32 accountId)
+    {
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        return FindCamp(accountId) != nullptr;
+    }
+
+    bool IsPlayerInCamp(Player* player)
+    {
+        if (!player)
+            return false;
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        uint32 const accountId = player->GetSession()->GetAccountId();
+        Camp const* camp = FindCamp(accountId);
+        if (!camp || player->GetMapId() != camp->map)
+            return false;
+
+        return Dist2D(camp->x, camp->y, player->GetPositionX(), player->GetPositionY()) <= CAMP_RADIUS;
+    }
+
+    bool IsPositionInCamp(Player* player, float x, float y)
+    {
+        if (!player)
+            return false;
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        uint32 const accountId = player->GetSession()->GetAccountId();
+        Camp const* camp = FindCamp(accountId);
+        if (!camp || player->GetMapId() != camp->map)
+            return false;
+
+        return Dist2D(camp->x, camp->y, x, y) <= CAMP_RADIUS;
+    }
+
+    uint32 GetCampPhaseMask(uint32 accountId)
+    {
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        Camp const* camp = FindCamp(accountId);
+        return camp ? (1u << camp->phaseBit) : PHASEMASK_NORMAL;
+    }
+
+    uint32 GetCampPropCount(uint32 accountId)
+    {
+        uint32 count = 0;
+        if (QueryResult r = CharacterDatabase.Query(
+                "SELECT COUNT(*) FROM mod_warband_camp_object WHERE account_id = {}", accountId))
+            count = r->Fetch()[0].Get<uint32>();
+        if (QueryResult rc = CharacterDatabase.Query(
+                "SELECT COUNT(*) FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
+            count += rc->Fetch()[0].Get<uint32>();
+        return count;
+    }
+
+    bool IsEntryAllowedForCamp(uint32 entry, bool isGM, std::string& outError)
+    {
+        if (isGM)
+            return true;
+
+        for (PropDef const& p : g_props)
+        {
+            if (p.entry == entry && !p.isCreature)
+                return true;
+        }
+
+        GameObjectTemplate const* info = sObjectMgr->GetGameObjectTemplate(entry);
+        if (!info)
+        {
+            outError = "Unknown GameObject entry.";
+            return false;
+        }
+
+        if (!info->displayId || !sGameObjectDisplayInfoStore.LookupEntry(info->displayId))
+        {
+            outError = "GameObject has no valid 3D display model.";
+            return false;
+        }
+
+        switch (info->type)
+        {
+            case GAMEOBJECT_TYPE_GENERIC:
+            case GAMEOBJECT_TYPE_CHAIR:
+            case GAMEOBJECT_TYPE_TEXT:
+            case GAMEOBJECT_TYPE_SPELL_FOCUS:
+                return true;
+            case GAMEOBJECT_TYPE_MAILBOX:
+                if (!g_enableMailbox.load())
+                {
+                    outError = "Mailboxes are disabled on this realm.";
+                    return false;
+                }
+                return true;
+            default:
+                outError = "That object type cannot be placed in a player camp.";
+                return false;
+        }
+    }
+
+    bool GetCampObject(uint32 accountId, uint64 propId, CampObjectRecord& outRecord)
+    {
+        std::string query;
+        if (accountId != 0)
+            query = Acore::StringFormat(
+                "SELECT id, account_id, spawn_guid, entry, pos_x, pos_y, pos_z, orientation, scale "
+                "FROM mod_warband_camp_object WHERE id = {} AND account_id = {}", propId, accountId);
+        else
+            query = Acore::StringFormat(
+                "SELECT id, account_id, spawn_guid, entry, pos_x, pos_y, pos_z, orientation, scale "
+                "FROM mod_warband_camp_object WHERE id = {}", propId);
+
+        QueryResult r = CharacterDatabase.Query(query);
+        if (!r)
+            return false;
+
+        Field* f = r->Fetch();
+        outRecord.id = f[0].Get<uint64>();
+        outRecord.accountId = f[1].Get<uint32>();
+        outRecord.spawnGuid = f[2].Get<uint32>();
+        outRecord.entry = f[3].Get<uint32>();
+        outRecord.x = f[4].Get<float>();
+        outRecord.y = f[5].Get<float>();
+        outRecord.z = f[6].Get<float>();
+        outRecord.orientation = f[7].Get<float>();
+        outRecord.scale = f[8].IsNull() ? 1.0f : f[8].Get<float>();
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        Camp const* c = FindCamp(outRecord.accountId);
+        outRecord.map = c ? c->map : 0;
+        outRecord.phaseMask = c ? (1u << c->phaseBit) : PHASEMASK_NORMAL;
+
+        auto const it = g_liveProps.find(propId);
+        if (it != g_liveProps.end())
+            outRecord.liveGuid = it->second;
+
+        return true;
+    }
+
+    bool IsCampObjectOwnedByAccount(uint32 accountId, uint64 propId)
+    {
+        QueryResult r = CharacterDatabase.Query(
+            "SELECT 1 FROM mod_warband_camp_object WHERE id = {} AND account_id = {}", propId, accountId);
+        return (r != nullptr);
+    }
+
+    uint64 FindNearestCampObject(Player* player, float maxDist)
+    {
+        if (!player)
+            return 0;
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        uint32 const accountId = player->GetSession()->GetAccountId();
+        Camp const* camp = FindCamp(accountId);
+        if (!camp || player->GetMapId() != camp->map)
+            return 0;
+
+        Map* map = player->GetMap();
+        if (!map)
+            return 0;
+
+        uint64 bestId = 0;
+        float bestDist = maxDist;
+
+        for (auto const& pair : g_liveProps)
+        {
+            uint64 const propId = pair.first;
+            ObjectGuid const guid = pair.second;
+
+            GameObject* go = map->GetGameObject(guid);
+            if (!go)
+                continue;
+
+            float const d = player->GetDistance(go);
+            if (d < bestDist)
+            {
+                if (QueryResult r = CharacterDatabase.Query(
+                        "SELECT account_id FROM mod_warband_camp_object WHERE id = {}", propId))
+                {
+                    if (r->Fetch()[0].Get<uint32>() == accountId)
+                    {
+                        bestDist = d;
+                        bestId = propId;
+                    }
+                }
+            }
+        }
+
+        return bestId;
+    }
+
+    std::vector<uint64> FindNearbyCampObjects(Player* player, float range)
+    {
+        std::vector<uint64> result;
+        if (!player)
+            return result;
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        uint32 const accountId = player->GetSession()->GetAccountId();
+        Camp const* camp = FindCamp(accountId);
+        if (!camp || player->GetMapId() != camp->map)
+            return result;
+
+        Map* map = player->GetMap();
+        if (!map)
+            return result;
+
+        for (auto const& pair : g_liveProps)
+        {
+            uint64 const propId = pair.first;
+            ObjectGuid const guid = pair.second;
+
+            GameObject* go = map->GetGameObject(guid);
+            if (!go)
+                continue;
+
+            float const d = player->GetDistance(go);
+            if (d <= range)
+            {
+                if (QueryResult r = CharacterDatabase.Query(
+                        "SELECT account_id FROM mod_warband_camp_object WHERE id = {}", propId))
+                {
+                    if (r->Fetch()[0].Get<uint32>() == accountId)
+                        result.push_back(propId);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    GameObject* GetLiveCampGameObject(Player* player, uint64 propId)
+    {
+        if (!player)
+            return nullptr;
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        auto const it = g_liveProps.find(propId);
+        if (it == g_liveProps.end())
+            return nullptr;
+
+        Map* map = player->GetMap();
+        return map ? map->GetGameObject(it->second) : nullptr;
+    }
+
+    uint64 GetCampObjectIdFromGameObject(GameObject const* go)
+    {
+        if (!go)
+            return 0;
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        auto const it = g_guidToPropId.find(go->GetGUID());
+        return (it != g_guidToPropId.end()) ? it->second : 0;
+    }
+
+    uint64 PlaceCampObject(Player* player, uint32 entry, float x, float y, float z, float o, float scale, std::string& outError)
+    {
+        if (!player)
+        {
+            outError = "Invalid player.";
+            return 0;
+        }
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+
+        if (!g_enabled.load())
+        {
+            outError = "Warband Camp system is currently disabled.";
+            return 0;
+        }
+
+        uint32 const accountId = player->GetSession()->GetAccountId();
+        Camp const* camp = FindCamp(accountId);
+        if (!camp)
+        {
+            outError = "You have no camp. Use .camp claim to establish one.";
+            return 0;
+        }
+
+        if (player->GetMapId() != camp->map)
+        {
+            outError = "You are not on your camp map.";
+            return 0;
+        }
+
+        if (Dist2D(camp->x, camp->y, x, y) > CAMP_RADIUS)
+        {
+            outError = "Target location is outside your camp boundaries.";
+            return 0;
+        }
+
+        bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
+        if (!IsEntryAllowedForCamp(entry, isGM, outError))
+            return 0;
+
+        if (entry == 142103)
+        {
+            if (!g_enableMailbox.load())
+            {
+                outError = "Mailboxes are disabled on this realm.";
+                return 0;
+            }
+
+            if (QueryResult mr = CharacterDatabase.Query(
+                    "SELECT id FROM mod_warband_camp_object WHERE account_id = {} AND entry = 142103 LIMIT 1", accountId))
+            {
+                outError = "You already have a mailbox in your camp (limit: 1).";
+                return 0;
+            }
+        }
+
+        uint32 count = 0;
+        if (QueryResult r = CharacterDatabase.Query(
+                "SELECT COUNT(*) FROM mod_warband_camp_object WHERE account_id = {}", accountId))
+            count = r->Fetch()[0].Get<uint32>();
+        if (QueryResult rc = CharacterDatabase.Query(
+                "SELECT COUNT(*) FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
+            count += rc->Fetch()[0].Get<uint32>();
+
+        uint32 const maxProps = g_maxProps.load();
+        if (maxProps && count >= maxProps)
+        {
+            outError = Acore::StringFormat("Your camp is full ({} objects). Remove something first.", maxProps);
+            return 0;
+        }
+
+        if (scale <= 0.0f)
+            scale = 1.0f;
+        else
+            scale = std::clamp(scale, 0.1f, 5.0f);
+
+        CharacterDatabase.DirectExecute(
+            "INSERT INTO mod_warband_camp_object "
+            "(account_id, entry, pos_x, pos_y, pos_z, orientation, scale) "
+            "VALUES ({}, {}, {:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.2f})",
+            accountId, entry, x, y, z, o, scale);
+
+        uint64 id = 0;
+        if (QueryResult r = CharacterDatabase.Query(
+                "SELECT id FROM mod_warband_camp_object WHERE account_id = {} ORDER BY id DESC LIMIT 1", accountId))
+            id = r->Fetch()[0].Get<uint64>();
+
+        if (!id)
+        {
+            outError = "Failed to save camp object to database.";
+            return 0;
+        }
+
+        CharacterDatabase.DirectExecute(
+            "UPDATE mod_warband_camp_object SET spawn_guid = {} WHERE id = {}", id, id);
+
+        Map* map = player->GetMap();
+        uint32 const phaseMask = 1u << camp->phaseBit;
+        ObjectGuid const guid = SpawnProp(map, entry, x, y, z, o, phaseMask, scale);
+        if (!guid)
+        {
+            CharacterDatabase.DirectExecute("DELETE FROM mod_warband_camp_object WHERE id = {}", id);
+            outError = "Failed to spawn object in the world.";
+            return 0;
+        }
+
+        g_liveProps[id] = guid;
+        g_guidToPropId[guid] = id;
+        g_lastPlacedProp[accountId] = { id, false };
+
+        GOMove::SendAdd(player, id);
+
+        return id;
+    }
+
+    bool MoveCampObject(Player* player, uint64 propId, float x, float y, float z, float o, std::string& outError)
+    {
+        if (!player)
+        {
+            outError = "Invalid player.";
+            return false;
+        }
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+
+        uint32 const accountId = player->GetSession()->GetAccountId();
+        bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
+
+        QueryResult r = CharacterDatabase.Query(
+            "SELECT account_id, entry, scale FROM mod_warband_camp_object WHERE id = {}", propId);
+        if (!r)
+        {
+            outError = "Camp object not found.";
+            return false;
+        }
+
+        Field* f = r->Fetch();
+        uint32 const ownerAccount = f[0].Get<uint32>();
+        uint32 const entry = f[1].Get<uint32>();
+        float const scale = f[2].IsNull() ? 1.0f : f[2].Get<float>();
+
+        if (!isGM && ownerAccount != accountId)
+        {
+            outError = "You can only move objects in your own camp.";
+            return false;
+        }
+
+        Camp const* owningCamp = FindCamp(ownerAccount);
+        if (!owningCamp)
+        {
+            outError = "Owning camp not found.";
+            return false;
+        }
+
+        if (Dist2D(owningCamp->x, owningCamp->y, x, y) > CAMP_RADIUS)
+        {
+            outError = "Cannot move object outside camp perimeter.";
+            return false;
+        }
+
+        Map* map = player->GetMap();
+        if (!map || map->GetId() != owningCamp->map)
+        {
+            outError = "Object is on a different map.";
+            return false;
+        }
+
+        CharacterDatabase.DirectExecute(
+            "UPDATE mod_warband_camp_object SET pos_x = {:.4f}, pos_y = {:.4f}, pos_z = {:.4f}, orientation = {:.4f} WHERE id = {}",
+            x, y, z, o, propId);
+
+        DespawnProp(map, propId);
+
+        uint32 const phaseMask = 1u << owningCamp->phaseBit;
+        ObjectGuid const newGuid = SpawnProp(map, entry, x, y, z, o, phaseMask, scale);
+        if (newGuid)
+        {
+            g_liveProps[propId] = newGuid;
+            g_guidToPropId[newGuid] = propId;
+        }
+
+        return true;
+    }
+
+    bool ScaleCampObject(Player* player, uint64 propId, float scale, std::string& outError)
+    {
+        if (!player || scale <= 0.0f)
+        {
+            outError = "Invalid scale.";
+            return false;
+        }
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+
+        uint32 const accountId = player->GetSession()->GetAccountId();
+        bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
+
+        QueryResult r = CharacterDatabase.Query(
+            "SELECT account_id, entry, pos_x, pos_y, pos_z, orientation FROM mod_warband_camp_object WHERE id = {}", propId);
+        if (!r)
+        {
+            outError = "Camp object not found.";
+            return false;
+        }
+
+        Field* f = r->Fetch();
+        uint32 const ownerAccount = f[0].Get<uint32>();
+        uint32 const entry = f[1].Get<uint32>();
+        float const x = f[2].Get<float>();
+        float const y = f[3].Get<float>();
+        float const z = f[4].Get<float>();
+        float const o = f[5].Get<float>();
+
+        if (!isGM && ownerAccount != accountId)
+        {
+            outError = "You can only scale objects in your own camp.";
+            return false;
+        }
+
+        Camp const* owningCamp = FindCamp(ownerAccount);
+        if (!owningCamp)
+        {
+            outError = "Owning camp not found.";
+            return false;
+        }
+
+        float const clampedScale = std::clamp(scale, 0.1f, 5.0f);
+
+        CharacterDatabase.DirectExecute(
+            "UPDATE mod_warband_camp_object SET scale = {:.2f} WHERE id = {}", clampedScale, propId);
+
+        Map* map = player->GetMap();
+        if (map && map->GetId() == owningCamp->map)
+        {
+            DespawnProp(map, propId);
+
+            uint32 const phaseMask = 1u << owningCamp->phaseBit;
+            ObjectGuid const newGuid = SpawnProp(map, entry, x, y, z, o, phaseMask, clampedScale);
+            if (newGuid)
+            {
+                g_liveProps[propId] = newGuid;
+                g_guidToPropId[newGuid] = propId;
+            }
+        }
+
+        return true;
+    }
+
+    bool DeleteCampObject(Player* player, uint64 propId, std::string& outError)
+    {
+        if (!player)
+        {
+            outError = "Invalid player.";
+            return false;
+        }
+
+        std::lock_guard<std::mutex> lock(g_campMutex);
+
+        uint32 const accountId = player->GetSession()->GetAccountId();
+        bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
+
+        QueryResult r = CharacterDatabase.Query(
+            "SELECT account_id FROM mod_warband_camp_object WHERE id = {}", propId);
+        if (!r)
+        {
+            outError = "Camp object not found.";
+            return false;
+        }
+
+        uint32 const ownerAccount = r->Fetch()[0].Get<uint32>();
+        if (!isGM && ownerAccount != accountId)
+        {
+            outError = "You can only delete objects in your own camp.";
+            return false;
+        }
+
+        Map* map = player->GetMap();
+        DespawnProp(map, propId);
+
+        CharacterDatabase.DirectExecute(
+            "DELETE FROM mod_warband_camp_object WHERE id = {}", propId);
+
+        auto const itLast = g_lastPlacedProp.find(ownerAccount);
+        if (itLast != g_lastPlacedProp.end() && !itLast->second.isCreature && itLast->second.id == propId)
+            g_lastPlacedProp.erase(ownerAccount);
+
+        GOMove::SendRemove(player, propId);
+
+        return true;
+    }
+
+    void DespawnCampProp(Map* map, uint64 propId)
+    {
+        std::lock_guard<std::mutex> lock(g_campMutex);
+        DespawnProp(map, propId);
     }
 }
 
@@ -1716,9 +2303,16 @@ public:
             return true;
         }
 
+        CharacterDatabase.DirectExecute(
+            "UPDATE mod_warband_camp_object SET spawn_guid = {} WHERE id = {}", id, id);
+
         g_liveProps[id] = guid;
+        g_guidToPropId[guid] = id;
         g_lastPlacedProp[accountId] = { id, false };
         g_propCooldown[accountId] = now + CAMP_PROP_COOLDOWN_SECONDS;
+
+        GOMove::SendAdd(me, id);
+
         if (maxProps)
             handler->PSendSysMessage("|cffffff00{}|r set up ({} of {}).", def->label, count + 1, maxProps);
         else
@@ -1800,6 +2394,7 @@ public:
             DespawnProp(me->GetMap(), targetId);
             CharacterDatabase.DirectExecute(
                 "DELETE FROM mod_warband_camp_object WHERE id = {}", targetId);
+            GOMove::SendRemove(me, targetId);
         }
 
         g_lastPlacedProp.erase(accountId);
@@ -1906,6 +2501,7 @@ public:
             DespawnProp(me->GetMap(), bestId);
             CharacterDatabase.DirectExecute(
                 "DELETE FROM mod_warband_camp_object WHERE id = {}", bestId);
+            GOMove::SendRemove(me, bestId);
         }
 
         auto const it = g_lastPlacedProp.find(accountId);
@@ -2460,6 +3056,7 @@ public:
         g_enableRestedXP = sConfigMgr->GetOption<bool>("WarbandCamp.EnableRestedXP", true);
         g_enableMailbox = sConfigMgr->GetOption<bool>("WarbandCamp.EnableMailbox", true);
         g_enableTrainingDummy = sConfigMgr->GetOption<bool>("WarbandCamp.EnableTrainingDummy", true);
+        g_enableGOMoveBuilding = sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding", true);
         g_inactivityDays = sConfigMgr->GetOption<uint32>("WarbandCamp.InactivityDays", 90);
 
         float view = sConfigMgr->GetOption<float>("WarbandCamp.ViewDistance", 40.0f);
@@ -2739,6 +3336,7 @@ public:
         g_enableRestedXP = sConfigMgr->GetOption<bool>("WarbandCamp.EnableRestedXP", true);
         g_enableMailbox = sConfigMgr->GetOption<bool>("WarbandCamp.EnableMailbox", true);
         g_enableTrainingDummy = sConfigMgr->GetOption<bool>("WarbandCamp.EnableTrainingDummy", true);
+        g_enableGOMoveBuilding = sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding", true);
         g_inactivityDays = sConfigMgr->GetOption<uint32>("WarbandCamp.InactivityDays", 90);
 
         ParseCommaDelimitedSet(sConfigMgr->GetOption<std::string>("WarbandCamp.BlacklistedMaps", ""), g_blacklistedMaps);
@@ -2870,14 +3468,17 @@ public:
             "CREATE TABLE IF NOT EXISTS mod_warband_camp_object ("
             "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, "
             "account_id INT UNSIGNED NOT NULL, "
+            "spawn_guid INT UNSIGNED NOT NULL DEFAULT 0, "
             "entry INT UNSIGNED NOT NULL, "
             "pos_x FLOAT NOT NULL, "
             "pos_y FLOAT NOT NULL, "
             "pos_z FLOAT NOT NULL, "
             "orientation FLOAT NOT NULL, "
+            "scale FLOAT NOT NULL DEFAULT 1, "
             "placed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
             "PRIMARY KEY (id), "
-            "KEY idx_account (account_id)"
+            "KEY idx_account (account_id), "
+            "KEY idx_spawn_guid (spawn_guid)"
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 "
             "COLLATE=utf8mb4_unicode_ci");
 
@@ -2905,6 +3506,12 @@ public:
 
         if (!CharacterDatabase.Query("SHOW COLUMNS FROM mod_warband_camp LIKE 'last_active'"))
             CharacterDatabase.DirectExecute("ALTER TABLE mod_warband_camp ADD COLUMN last_active INT UNSIGNED NOT NULL DEFAULT 0");
+
+        if (!CharacterDatabase.Query("SHOW COLUMNS FROM mod_warband_camp_object LIKE 'spawn_guid'"))
+            CharacterDatabase.DirectExecute("ALTER TABLE mod_warband_camp_object ADD COLUMN spawn_guid INT UNSIGNED NOT NULL DEFAULT 0, ADD KEY idx_spawn_guid (spawn_guid)");
+
+        if (!CharacterDatabase.Query("SHOW COLUMNS FROM mod_warband_camp_object LIKE 'scale'"))
+            CharacterDatabase.DirectExecute("ALTER TABLE mod_warband_camp_object ADD COLUMN scale FLOAT NOT NULL DEFAULT 1");
 
         // Backward compatibility migration from legacy wowlegends tables if present:
         if (CharacterDatabase.Query("SHOW TABLES LIKE 'wowlegends_warband_camp'"))

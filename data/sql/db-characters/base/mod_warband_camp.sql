@@ -23,14 +23,17 @@ CREATE TABLE IF NOT EXISTS `mod_warband_camp` (
 CREATE TABLE IF NOT EXISTS `mod_warband_camp_object` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `account_id` int unsigned NOT NULL,
+  `spawn_guid` int unsigned NOT NULL DEFAULT '0',
   `entry` int unsigned NOT NULL,
   `pos_x` float NOT NULL,
   `pos_y` float NOT NULL,
   `pos_z` float NOT NULL,
   `orientation` float NOT NULL,
+  `scale` float NOT NULL DEFAULT '1',
   `placed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_account` (`account_id`)
+  KEY `idx_account` (`account_id`),
+  KEY `idx_spawn_guid` (`spawn_guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mod_warband_camp_creature` (

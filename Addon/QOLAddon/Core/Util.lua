@@ -59,6 +59,10 @@ function QOL.Trim(s)
     return (s:gsub("^%s+", ""):gsub("%s+$", ""))
 end
 
+function QOL.IsGM()
+    return (IsGMClient and IsGMClient()) or (UnitIsGM and UnitIsGM("player")) or false
+end
+
 -- Resolve an arg value, applying its fallback when blank.
 --   fallback="target" → UnitName("target")
 --   fallback="self"   → UnitName("player")

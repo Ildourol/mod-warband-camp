@@ -105,7 +105,7 @@ local titleTxt = BF:CreateFontString(nil, "OVERLAY")
 titleTxt:SetFont("Fonts\\MORPHEUS.ttf", 15)
 titleTxt:SetTextColor(0.8, 0.2, 0.2)
 titleTxt:SetPoint("TOPLEFT", BF, "TOPLEFT", 52, -8)
-titleTxt:SetText("GameObject Browser")
+titleTxt:SetText("Camp Building 3D Browser")
 
 -- Close button
 local cBtn = CreateFrame("Button", "GOMove_BrowseClose", BF)

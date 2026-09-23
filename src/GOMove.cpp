@@ -5,6 +5,7 @@
  */
 
 #include "GOMove.h"
+#include "WarbandCamp.h"
 #include <cmath>
 #include <string>
 #include "Cell.h"
@@ -81,11 +82,36 @@ void GOMove::SendAddonMessage(Player* player, const char* msg)
 
 GameObject* GOMove::GetGameObject(Player* player, ObjectGuid::LowType lowguid)
 {
+    if (!player)
+        return nullptr;
+
+    if (GameObject* campGo = WarbandCamp::GetLiveCampGameObject(player, lowguid))
+        return campGo;
+
     return ChatHandler(player->GetSession()).GetObjectFromPlayerMapByDbGuid(lowguid);
 }
 
 void GOMove::SendAdd(Player* player, ObjectGuid::LowType lowguid)
 {
+    if (!player)
+        return;
+
+    // Check if this lowguid corresponds to a camp-owned object
+    WarbandCamp::CampObjectRecord campRecord;
+    if (WarbandCamp::GetCampObject(0, lowguid, campRecord))
+    {
+        std::string name = "Camp Object";
+        if (GameObjectTemplate const* temp = sObjectMgr->GetGameObjectTemplate(campRecord.entry))
+            name = temp->name;
+        if (name.size() > 100)
+            name = name.substr(0, 100);
+        char msg[256];
+        snprintf(msg, sizeof(msg), "ADD|%u|%s|%u", uint32(lowguid), name.c_str(), campRecord.entry);
+        SendAddonMessage(player, msg);
+        return;
+    }
+
+    // Otherwise, check world GameObject (GM administrator mode)
     GameObjectData const* data = sObjectMgr->GetGameObjectData(lowguid);
     if (!data)
         return;
@@ -96,7 +122,7 @@ void GOMove::SendAdd(Player* player, ObjectGuid::LowType lowguid)
     if (name.size() > 100)
         name = name.substr(0, 100);
     char msg[256];
-    snprintf(msg, 256, "ADD|%u|%s|%u", lowguid, name.c_str(), data->id);
+    snprintf(msg, sizeof(msg), "ADD|%u|%s|%u", uint32(lowguid), name.c_str(), data->id);
     SendAddonMessage(player, msg);
 }
 
@@ -277,19 +303,23 @@ void GOMove::SendSearchResults(Player* player, const std::string& search)
     if (!player || search.empty())
         return;
 
+    bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
     bool isNumeric = search.find_first_not_of("0123456789") == std::string::npos;
+
+    // Non-GMs only search safe object types suitable for camps (generic, chair, spell focus, text, map object, mailbox)
+    std::string const typeFilter = isGM ? "" : " AND type IN (5, 7, 8, 9, 14, 19) ";
 
     QueryResult result;
     if (isNumeric)
     {
         uint32 entry = static_cast<uint32>(std::stoul(search));
-        result = WorldDatabase.Query("SELECT entry, name, displayId FROM gameobject_template WHERE entry = {} LIMIT 1", entry);
+        result = WorldDatabase.Query("SELECT entry, name, displayId FROM gameobject_template WHERE entry = {}{}", entry, typeFilter);
     }
     else
     {
         std::string escaped = search;
         WorldDatabase.EscapeString(escaped);
-        result = WorldDatabase.Query("SELECT entry, name, displayId FROM gameobject_template WHERE name LIKE '%{}%' LIMIT 500", escaped);
+        result = WorldDatabase.Query("SELECT entry, name, displayId FROM gameobject_template WHERE name LIKE '%{}%'{}LIMIT 500", escaped, typeFilter);
     }
 
     uint32 total = 0;

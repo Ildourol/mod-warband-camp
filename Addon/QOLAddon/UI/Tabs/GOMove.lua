@@ -25,8 +25,8 @@ local function gomoveBuilder(parent)
     end)
     browseBtn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
-        GameTooltip:SetText("3D GameObject Browser", 1, 0.82, 0.30)
-        GameTooltip:AddLine("Opens the interactive 3D model viewer and search engine.", 1, 1, 1, true)
+        GameTooltip:SetText("3D Camp Object Browser", 1, 0.82, 0.30)
+        GameTooltip:AddLine("Opens the interactive 3D model viewer and search engine to place objects in your Warband Camp.", 1, 1, 1, true)
         GameTooltip:Show()
     end)
     browseBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -257,6 +257,10 @@ local function gomoveBuilder(parent)
     local phaseBtn = QOL.MakeFlatButton(colLeft, 80, 22, "Set Phase", { justify = "CENTER" })
     phaseBtn:SetPoint("LEFT", phaseBox, "RIGHT", 6, 0)
     phaseBtn:SetScript("OnClick", function()
+        if not QOL.IsGM() then
+            QOL.Warn("Camp objects automatically inherit your camp phase mask.")
+            return
+        end
         local ph = tonumber(phaseBox:GetText())
         if ph and ph >= 0 then
             GOMove:Move("PHASE", ph)
@@ -264,6 +268,17 @@ local function gomoveBuilder(parent)
             QOL.Warn("enter a valid phase mask integer (e.g. 1, 169)")
         end
     end)
+    phaseBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Phase Mask", 1, 0.82, 0.30)
+        if QOL.IsGM() then
+            GameTooltip:AddLine("Set the phase mask for the selected world object.", 1, 1, 1, true)
+        else
+            GameTooltip:AddLine("Camp objects automatically inherit your personal camp phase. (GM administrative setting)", 0.7, 0.7, 0.7, true)
+        end
+        GameTooltip:Show()
+    end)
+    phaseBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     -- Spawn direct by Entry
     local spawnBox = QOL.MakeFlatEditBox(colLeft, 100, 22, "Entry ID", true)
