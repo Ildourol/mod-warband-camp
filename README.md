@@ -68,6 +68,10 @@ It combines the full **Warband Camp** system (account-wide campsite, custom phas
   - When `mod-playerbots` is installed, `.camp alts` and `WarbandCamp.AutoAlts` rouse the player's offline alts to gather around the campfire and stroll along the perimeter.
   - Logging into a parked alt restores the character to their previous location in the world.
   - Zero hard dependencies: If `mod-playerbots` is not present, the module compiles and runs cleanly.
+- **Integrated In-Game Client UI (`QOLAddon`)**:
+  - Bundled in-game UI addon (`Addon/QOLAddon`) for Wrath of the Lich King 3.3.5a.
+  - Interactive camp management: claim, teleport, visit, configure privacy, set greeting messages, and place props/NPCs directly from categorized dropdowns.
+  - Integrated AI companion bot controls and dungeon clearing automation.
 
 ---
 
