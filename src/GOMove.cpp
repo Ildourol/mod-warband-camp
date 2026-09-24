@@ -33,6 +33,13 @@ void GOMoveScaleCache::Load()
 {
     std::lock_guard<std::mutex> guard(_lock);
     _scales.clear();
+
+    WorldDatabase.DirectExecute(
+        "CREATE TABLE IF NOT EXISTS `gomove_scale` ("
+        "  `guid` INT UNSIGNED NOT NULL PRIMARY KEY COMMENT 'gameobject.guid',"
+        "  `scale` FLOAT NOT NULL DEFAULT 1.0"
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Per-instance GameObject scale overrides (mod-gomove)'");
+
     QueryResult result = WorldDatabase.Query("SELECT guid, scale FROM gomove_scale");
     if (!result)
         return;
@@ -312,7 +319,14 @@ void GOMove::SendSearchResults(Player* player, const std::string& search)
     QueryResult result;
     if (isNumeric)
     {
-        uint32 entry = static_cast<uint32>(std::stoul(search));
+        if (search.length() > 10)
+            return;
+        uint32 entry = 0;
+        try {
+            entry = static_cast<uint32>(std::stoul(search));
+        } catch (...) {
+            return;
+        }
         result = WorldDatabase.Query("SELECT entry, name, displayId FROM gameobject_template WHERE entry = {}{}", entry, typeFilter);
     }
     else

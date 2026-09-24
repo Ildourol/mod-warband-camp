@@ -1,8 +1,8 @@
--- QOLAddon/Core/Warband.lua
+-- WarbandCamp/Core/Warband.lua
 -- Warband Camp state: parse the server's CHAT_MSG_SYSTEM replies to `.camp`
 -- commands into a small session-cached state table the tab renders from.
 
-local addonName, QOL = ...
+local addonName, WBC = ...
 
 local W = {
     probed  = false,   -- have we heard ANY .camp status yet this session
@@ -13,7 +13,7 @@ local W = {
     count   = nil,     -- props placed
     cap     = nil,     -- prop cap; nil = unlimited (MaxProps=0) or unknown
 }
-QOL.Warband = W
+WBC.Warband = W
 
 -- UI refresh hooks (the tab registers one).
 local callbacks = {}
@@ -28,7 +28,7 @@ end
 
 -- Silent probe (no history entry). Delay lets claim/leave settle server-side.
 function W.Probe(delay)
-    QOL.After(delay or 0, function() SendChatMessage(".camp", "SAY") end)
+    WBC.After(delay or 0, function() SendChatMessage(".camp", "SAY") end)
 end
 
 -- Parse one system line. Returns true if it was a Warband line.
@@ -108,7 +108,7 @@ function W.ParseSystem(msg)
     local newPriv = msg:match("Camp privacy updated to: (.-)%(")
     if not newPriv then newPriv = msg:match("Camp privacy updated to: (.-)$") end
     if newPriv then
-        W.privacy = QOL.Trim(newPriv)
+        W.privacy = WBC.Trim(newPriv)
         notify(); return true
     end
 
@@ -135,4 +135,4 @@ listener:RegisterEvent("CHAT_MSG_SYSTEM")
 listener:SetScript("OnEvent", function(_, _, msg) W.ParseSystem(msg) end)
 
 -- One probe per session, shortly after login so the world is settled.
-QOL.AddLogin(function() W.Probe(5) end)
+WBC.AddLogin(function() W.Probe(5) end)

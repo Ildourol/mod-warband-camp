@@ -1,12 +1,12 @@
--- QOLAddon/UI/Tabs/Favorites.lua
+-- WarbandCamp/UI/Tabs/Favorites.lua
 -- Your pinned commands. Right-click any command anywhere to pin/unpin it.
 
-local addonName, QOL = ...
+local addonName, WBC = ...
 
-QOL.RegisterTab({
+WBC.RegisterTab({
     id = "favorites", label = "Favorites",
     builder = function(parent)
-        local scroll, content = QOL.CreateScrollContent(parent)
+        local scroll, content = WBC.CreateScrollContent(parent)
 
         local empty = content:CreateFontString(nil, "OVERLAY", "GameFontDisable")
         empty:SetPoint("TOP", content, "TOP", 0, -40)
@@ -16,18 +16,18 @@ QOL.RegisterTab({
         local holder
         local function refresh()
             if holder then holder:Hide(); holder:SetParent(nil); holder = nil end
-            local favs = QOL.GetFavorites()
+            local favs = WBC.GetFavorites()
             if #favs == 0 then empty:Show(); content:SetHeight(200); return end
             empty:Hide()
             holder = CreateFrame("Frame", nil, content)
             holder:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
             holder:SetWidth(780)
-            local used = QOL.LayoutRows(holder, favs, { rowsPerColumn = 16, columnWidth = 380 })
+            local used = WBC.LayoutRows(holder, favs, { rowsPerColumn = 16, columnWidth = 380 })
             holder:SetHeight(used)
             content:SetHeight(math.max(used, 200))
         end
-        QOL.RefreshFavoritesTab = refresh
+        WBC.RefreshFavoritesTab = refresh
         refresh()
     end,
-    onShow = function() if QOL.RefreshFavoritesTab then QOL.RefreshFavoritesTab() end end,
+    onShow = function() if WBC.RefreshFavoritesTab then WBC.RefreshFavoritesTab() end end,
 })

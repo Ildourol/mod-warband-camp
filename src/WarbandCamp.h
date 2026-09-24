@@ -1,6 +1,6 @@
 /*
- * Warband Camp & GOMove — Unified Architecture
- * Header for Camp Object Services and Permissions
+ * Warband Camp — Native 3D Construction & Housing Module
+ * Header for Camp Object Services, 3D Building, and Permissions
  */
 
 #ifndef WARBAND_CAMP_H
@@ -33,8 +33,23 @@ namespace WarbandCamp
         ObjectGuid liveGuid = ObjectGuid::Empty;
     };
 
+    struct CampCreatureRecord
+    {
+        uint64 id = 0;
+        uint32 accountId = 0;
+        uint32 entry = 0;
+        uint32 map = 0;
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+        float orientation = 0.0f;
+        uint32 phaseMask = 0;
+        ObjectGuid liveGuid = ObjectGuid::Empty;
+    };
+
     // Configuration gates
     bool IsCampEnabled();
+    bool IsBuildingEnabled();
     bool IsGOMoveBuildingEnabled();
     uint32 GetMaxProps();
 

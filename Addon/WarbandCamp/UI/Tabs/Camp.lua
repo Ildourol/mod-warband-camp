@@ -1,4 +1,4 @@
--- QOLAddon/UI/Tabs/Warband.lua
+-- WarbandCamp/UI/Tabs/Camp.lua
 -- * Warband Camp (repack v1.5.0, task #74): manage the whole camp by buttons —
 -- claim/travel/visit/break, gather alts, and place props from categorized
 -- dropdowns. Authored from handoffs/2026-08-09_addon_warband_tab.md.
@@ -7,7 +7,7 @@
 -- not-enabled reply this panel greys out for the session.
 -- Boundaries: NO Warband Bank, NO banner picker (v1.6 — layout room left).
 
-local addonName, QOL = ...
+local addonName, WBC = ...
 
 local function row(id, label, fmt, tooltip, args)
     return { id = id, label = label, format = fmt, wl = false, group = "Warband",
@@ -38,17 +38,17 @@ local CampRows = {
 }
 
 local function warbandBuilder(parent)
-    local W = QOL.Warband
-    local c = QOL.colors
+    local W = WBC.Warband
+    local c = WBC.colors
 
     -- ─── Status bar ────────────────────────────────────────────────────────
     local statusFS = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     statusFS:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, -8)
     statusFS:SetJustifyH("LEFT")
 
-    local refresh = QOL.MakeFlatButton(parent, 90, 22, "Refresh", { justify = "CENTER" })
+    local refresh = WBC.MakeFlatButton(parent, 90, 22, "Refresh", { justify = "CENTER" })
     refresh:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -8, -6)
-    refresh:SetScript("OnClick", function() QOL.RunCommand(".camp") end)
+    refresh:SetScript("OnClick", function() WBC.RunCommand(".camp") end)
 
     -- ─── Body (everything below the status bar; hidden when disabled) ──────
     local body = CreateFrame("Frame", nil, parent)
@@ -56,16 +56,21 @@ local function warbandBuilder(parent)
     body:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
 
     -- Left: camp actions
-    local used = QOL.LayoutRows(body, CampRows, { yTop = 8, x = 8, columnWidth = 360,
+    local used = WBC.LayoutRows(body, CampRows, { yTop = 8, x = 8, columnWidth = 360,
         sectionTitle = "Your camp" })
 
-    local breakBtn = QOL.MakeFlatButton(body, 168, 24, "Break camp...", { justify = "CENTER", danger = true })
+    local breakBtn = WBC.MakeFlatButton(body, 168, 24, "Break camp...", { justify = "CENTER", danger = true })
     breakBtn:SetPoint("TOPLEFT", body, "TOPLEFT", 18, -(used + 4))
     breakBtn:SetScript("OnClick", function()
-        -- The server itself is two-step: `.camp leave` prints its warning line,
-        -- our popup then sends `.camp leave confirm`.
-        QOL.RunCommand(".camp leave")
-        StaticPopup_Show("QOL_CONFIRM_CAMP_LEAVE")
+        WBC.ShowConfirm(
+            "|cffff4444Break camp?|r\n\nThis destroys your Warband Camp and EVERYTHING placed in it.\nIt cannot be undone, and the camp belongs to your whole account.\n\nReally break it?",
+            function()
+                WBC._ExecuteRaw(".camp leave confirm")
+                if WBC.Warband then WBC.Warband.Probe(2) end
+            end,
+            "Yes, break camp",
+            "Cancel"
+        )
     end)
     breakBtn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -76,16 +81,16 @@ local function warbandBuilder(parent)
     breakBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     -- Right: prop placement
-    local hdr = QOL.CreateSectionHeader(body, "Place props")
+    local hdr = WBC.CreateSectionHeader(body, "Place props")
     hdr:SetPoint("TOPLEFT", body, "TOPLEFT", 380, -8)
 
-    local catDD = QOL.CreateChoice(body, 150, 24, QOL.WarbandProps.CategoryNames(), "category")
+    local catDD = WBC.CreateChoice(body, 150, 24, WBC.WarbandProps.CategoryNames(), "category")
     catDD:SetPoint("TOPLEFT", body, "TOPLEFT", 384, -(8 + hdr:GetHeight() + 8))
 
-    local propDD = QOL.CreateChoice(body, 150, 24, {}, "prop")
+    local propDD = WBC.CreateChoice(body, 150, 24, {}, "prop")
     propDD:SetPoint("LEFT", catDD, "RIGHT", 6, 0)
 
-    local angleBox = QOL.MakeFlatEditBox(body, 50, 24, "0°", true)
+    local angleBox = WBC.MakeFlatEditBox(body, 50, 24, "0°", true)
     angleBox:SetPoint("LEFT", propDD, "RIGHT", 6, 0)
     angleBox:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -99,11 +104,11 @@ local function warbandBuilder(parent)
     local origCatSet = catDD.SetValue
     catDD.SetValue = function(v)
         origCatSet(v)
-        propDD.SetChoices(v and QOL.WarbandProps.PropChoices(v) or {})
+        propDD.SetChoices(v and WBC.WarbandProps.PropChoices(v) or {})
         propDD.SetValue(nil)
     end
 
-    local placeBtn = QOL.MakeFlatButton(body, 85, 24, "Place", { justify = "CENTER" })
+    local placeBtn = WBC.MakeFlatButton(body, 85, 24, "Place", { justify = "CENTER" })
     placeBtn:SetPoint("TOPLEFT", catDD, "BOTTOMLEFT", 0, -10)
     placeBtn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -114,9 +119,9 @@ local function warbandBuilder(parent)
     end)
     placeBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    local removeBtn = QOL.MakeFlatButton(body, 125, 24, "Remove nearest", { justify = "CENTER" })
+    local removeBtn = WBC.MakeFlatButton(body, 125, 24, "Remove nearest", { justify = "CENTER" })
     removeBtn:SetPoint("LEFT", placeBtn, "RIGHT", 6, 0)
-    removeBtn:SetScript("OnClick", function() QOL.RunCommand(".camp remove") end)
+    removeBtn:SetScript("OnClick", function() WBC.RunCommand(".camp remove") end)
     removeBtn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText("Remove nearest", 1, 0.82, 0.30)
@@ -126,9 +131,9 @@ local function warbandBuilder(parent)
     end)
     removeBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    local undoBtn = QOL.MakeFlatButton(body, 85, 24, "Undo last", { justify = "CENTER" })
+    local undoBtn = WBC.MakeFlatButton(body, 85, 24, "Undo last", { justify = "CENTER" })
     undoBtn:SetPoint("LEFT", removeBtn, "RIGHT", 6, 0)
-    undoBtn:SetScript("OnClick", function() QOL.RunCommand(".camp undo") end)
+    undoBtn:SetScript("OnClick", function() WBC.RunCommand(".camp undo") end)
     undoBtn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText("Undo last prop", 1, 0.82, 0.30)
@@ -142,17 +147,17 @@ local function warbandBuilder(parent)
     local lastPlace = 0
     placeBtn:SetScript("OnClick", function()
         local key = propDD.GetValue()
-        if not key then QOL.Warn("pick a category and a prop first.") return end
+        if not key then WBC.Warn("pick a category and a prop first.") return end
         if GetTime() - lastPlace < 3 then return end   -- "Steady on - one thing at a time."
         lastPlace = GetTime()
-        local angle = QOL.Trim(angleBox:GetText() or "")
+        local angle = WBC.Trim(angleBox:GetText() or "")
         local cmd = ".camp place " .. key
         if angle ~= "" and tonumber(angle) then
             cmd = cmd .. " " .. tonumber(angle)
         end
-        QOL.RunCommand(cmd)
+        WBC.RunCommand(cmd)
         placeBtn.label:SetText("Placing...")
-        QOL.After(3, function() placeBtn.label:SetText("Place") end)
+        WBC.After(3, function() placeBtn.label:SetText("Place") end)
     end)
 
     local placeHint = body:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
@@ -164,11 +169,11 @@ local function warbandBuilder(parent)
         .. "Bigger props land further out; stand on a table to place at table height. "
         .. "You must be within 32 yd of the camp centre, on the ground.")
 
-    local gomoveBtn = QOL.MakeFlatButton(body, 200, 24, "Open 3D Camp Builder", { justify = "CENTER" })
+    local gomoveBtn = WBC.MakeFlatButton(body, 200, 24, "Open 3D Camp Builder", { justify = "CENTER" })
     gomoveBtn:SetPoint("TOPLEFT", placeHint, "BOTTOMLEFT", 0, -10)
     gomoveBtn:SetScript("OnClick", function()
-        if QOL.SelectTabById then
-            QOL.SelectTabById("gomove")
+        if WBC.SelectTabById then
+            WBC.SelectTabById("builder")
         end
     end)
     gomoveBtn:SetScript("OnEnter", function(self)
@@ -225,7 +230,7 @@ local function warbandBuilder(parent)
     render()
 end
 
-QOL.RegisterTab({
-    id = "warband", label = "Warband", wl = false,
+WBC.RegisterTab({
+    id = "camp", label = "Camp", wl = false,
     builder = warbandBuilder,
 })

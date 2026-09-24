@@ -1,8 +1,8 @@
--- QOLAddon/UI/Widgets.lua
+-- WarbandCamp/UI/Widgets.lua
 -- Reusable UI factories used by tabs. Built from lightweight, single-
 -- texture widgets so tabs stack rows smoothly.
 
-local addonName, QOL = ...
+local addonName, WBC = ...
 
 local ROW_HEIGHT  = 26
 local ROW_SPACING = 4
@@ -11,7 +11,7 @@ local INPUT_WIDTH = 104
 local PIP_WIDTH   = 6
 
 -- ─── Backdrops ─────────────────────────────────────────────────────────────
-QOL.backdrops = {
+WBC.backdrops = {
     panel = {
         bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -26,21 +26,21 @@ QOL.backdrops = {
     },
 }
 
-function QOL.ApplyBackdrop(frame, kind, bgAlpha, r, g, b)
-    frame:SetBackdrop(QOL.backdrops[kind or "panel"])
+function WBC.ApplyBackdrop(frame, kind, bgAlpha, r, g, b)
+    frame:SetBackdrop(WBC.backdrops[kind or "panel"])
     frame:SetBackdropColor(r or 0.04, g or 0.05, b or 0.07, bgAlpha or 0.92)
     frame:SetBackdropBorderColor(0.30, 0.45, 0.55, 1)
 end
 
 -- ─── Section header ────────────────────────────────────────────────────────
-function QOL.CreateSectionHeader(parent, text)
+function WBC.CreateSectionHeader(parent, text)
     local fs = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    fs:SetText(QOL.colors.label .. text .. QOL.colors.reset)
+    fs:SetText(WBC.colors.label .. text .. WBC.colors.reset)
     return fs
 end
 
 -- ─── Flat widget factories ─────────────────────────────────────────────────
-function QOL.MakeFlatButton(parent, w, h, text, opts)
+function WBC.MakeFlatButton(parent, w, h, text, opts)
     opts = opts or {}
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(w, h)
@@ -99,7 +99,7 @@ local function makeFlatEditBox(parent, w, h, placeholder, isNumeric)
     end
     return e
 end
-QOL.MakeFlatEditBox = makeFlatEditBox
+WBC.MakeFlatEditBox = makeFlatEditBox
 
 -- ─── Flat dropdown (choice) ────────────────────────────────────────────────
 local openChoiceMenu, choiceCloser
@@ -108,7 +108,7 @@ local function closeChoiceMenu()
     openChoiceMenu = nil
     if choiceCloser then choiceCloser:Hide() end
 end
-QOL.CloseChoiceMenu = closeChoiceMenu
+WBC.CloseChoiceMenu = closeChoiceMenu
 
 local function ensureCloser()
     if choiceCloser then return choiceCloser end
@@ -120,7 +120,7 @@ local function ensureCloser()
     return choiceCloser
 end
 
-function QOL.CreateChoice(parent, w, h, choices, placeholder, onSelect)
+function WBC.CreateChoice(parent, w, h, choices, placeholder, onSelect)
     local c = CreateFrame("Button", nil, parent)
     c:SetSize(w, h)
     local bg = c:CreateTexture(nil, "BACKGROUND"); bg:SetAllPoints(c); bg:SetTexture(0, 0, 0, 0.55)
@@ -158,7 +158,7 @@ function QOL.CreateChoice(parent, w, h, choices, placeholder, onSelect)
             menu = CreateFrame("Frame", nil, UIParent)
             menu:SetFrameStrata("FULLSCREEN_DIALOG")
             menu:EnableMouse(true)
-            QOL.ApplyBackdrop(menu, "inset", 0.98, 0.05, 0.07, 0.10)
+            WBC.ApplyBackdrop(menu, "inset", 0.98, 0.05, 0.07, 0.10)
             menu:Hide(); menu._btns = {}; menu._offset = 0; c.menu = menu
 
             menu:EnableMouseWheel(true)
@@ -197,7 +197,7 @@ function QOL.CreateChoice(parent, w, h, choices, placeholder, onSelect)
                 local opt = c.choices[optIdx]
                 local b = menu._btns[i]
                 if not b then
-                    b = QOL.MakeFlatButton(menu, btnWidth, 18, "", { padLeft = 6 })
+                    b = WBC.MakeFlatButton(menu, btnWidth, 18, "", { padLeft = 6 })
                     menu._btns[i] = b
                 end
                 b:SetWidth(btnWidth)
@@ -240,7 +240,7 @@ end
 
 -- ─── Single command row ────────────────────────────────────────────────────
 -- def = { id, label, format, args, danger, group, tooltip, send, getScope }
-function QOL.CreateCommandRow(parent, def)
+function WBC.CreateCommandRow(parent, def)
     local row = CreateFrame("Frame", nil, parent)
     row:SetHeight(ROW_HEIGHT)
     row.def = def
@@ -251,12 +251,12 @@ function QOL.CreateCommandRow(parent, def)
     local pip = row:CreateTexture(nil, "ARTWORK")
     pip:SetPoint("LEFT", row, "LEFT", 0, 0)
     pip:SetSize(PIP_WIDTH, ROW_HEIGHT - 4)
-    local cat = QOL.cats[QOL.CatOf(def)]
+    local cat = WBC.cats[WBC.CatOf(def)]
     pip:SetTexture(cat.rgb[1], cat.rgb[2], cat.rgb[3], 0.95)
 
     -- Label button.
     local labelText = def.label or def.id or "?"
-    local btn = QOL.MakeFlatButton(row, LABEL_WIDTH, ROW_HEIGHT - 2, labelText, { danger = def.danger })
+    local btn = WBC.MakeFlatButton(row, LABEL_WIDTH, ROW_HEIGHT - 2, labelText, { danger = def.danger })
     btn:SetPoint("LEFT", pip, "RIGHT", 4, 0)
     btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     row.button = btn
@@ -271,20 +271,20 @@ function QOL.CreateCommandRow(parent, def)
         if type(choices) == "function" then choices = choices() end
         if not choices and arg.placeholder and arg.placeholder:lower():match("^on%s*/%s*off") then choices = { "on", "off" } end
         if choices then
-            local ch = QOL.CreateChoice(row, arg.width or INPUT_WIDTH, ROW_HEIGHT - 2, choices, arg.placeholder,
-                function(v) QOL.SetInputCache(rowKey, arg.key, v) end)
+            local ch = WBC.CreateChoice(row, arg.width or INPUT_WIDTH, ROW_HEIGHT - 2, choices, arg.placeholder,
+                function(v) WBC.SetInputCache(rowKey, arg.key, v) end)
             ch:SetPoint("LEFT", prev, "RIGHT", 8, 0)
-            local cached = QOL.GetInputCache(rowKey, arg.key)
+            local cached = WBC.GetInputCache(rowKey, arg.key)
             if cached and cached ~= "" then ch.SetValue(cached) end
             row.getters[arg.key] = ch.GetValue
             prev = ch
         else
             local edit = makeFlatEditBox(row, arg.width or INPUT_WIDTH, ROW_HEIGHT - 2, arg.placeholder, arg.numeric)
             edit:SetPoint("LEFT", prev, "RIGHT", 8, 0)
-            edit:HookScript("OnTextChanged", function(self) QOL.SetInputCache(rowKey, arg.key, self:GetText()) end)
+            edit:HookScript("OnTextChanged", function(self) WBC.SetInputCache(rowKey, arg.key, self:GetText()) end)
             edit:SetScript("OnEnterPressed", function(self) self:ClearFocus(); execute() end)
             edit:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-            local cached = QOL.GetInputCache(rowKey, arg.key)
+            local cached = WBC.GetInputCache(rowKey, arg.key)
             if cached and cached ~= "" then edit:SetText(cached) end
             if edit.refreshHint then edit.refreshHint() end
             row.edits[arg.key] = edit
@@ -303,22 +303,27 @@ function QOL.CreateCommandRow(parent, def)
     end
 
     execute = function()
-        local line, err = QOL.BuildLine(def, gatherValues())
-        if not line then QOL.Warn(err or "invalid args"); return end
-        if def.send == "bot" then
-            local scope = (def.getScope and def.getScope()) or def.botScope
-            QOL.RunBotOrder(line, { scope = scope })
-        else
-            QOL.RunCommand(line, { danger = def.danger })
-        end
+        local line, err = WBC.BuildLine(def, gatherValues())
+        if not line then WBC.Warn(err or "invalid args"); return end
+        WBC.RunCommand(line, { danger = def.danger })
     end
     row.Execute = execute
 
     btn:SetScript("OnClick", function(_, mouseButton)
         if mouseButton == "RightButton" then
-            QOL.ToggleFavorite(def)
+            WBC.ToggleFavorite(def)
         elseif IsShiftKeyDown() then
-            ChatFrame_OpenChat(QOL.PreviewLine(def, gatherValues()))
+            local line = WBC.PreviewLine(def, gatherValues())
+            if ChatFrame1EditBox and ChatFrame1EditBox:IsVisible() then
+                ChatFrame1EditBox:Insert(line)
+            else
+                local editBox = DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.editBox
+                if editBox then
+                    editBox:Show()
+                    editBox:SetText(line)
+                    editBox:HighlightText()
+                end
+            end
         else
             execute()
         end
@@ -328,14 +333,10 @@ function QOL.CreateCommandRow(parent, def)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         local title = def.label or def.id or ""
         GameTooltip:SetText(title, 1, 0.82, 0.30)
-        GameTooltip:AddLine(QOL.PreviewLine(def, gatherValues()), 0.27, 0.84, 1, true)
+        GameTooltip:AddLine(WBC.PreviewLine(def, gatherValues()), 0.27, 0.84, 1, true)
         if def.tooltip then GameTooltip:AddLine(def.tooltip, 1, 1, 1, true) end
         GameTooltip:AddLine(" ")
-        if def.send == "bot" then
-            GameTooltip:AddLine("Bot order - sent to all your bots (party/raid) or the targeted bot (whisper).", 0.90, 0.80, 0.50, true)
-        else
-            GameTooltip:AddLine("Your command - runs as you.", 0.7, 0.7, 0.7)
-        end
+        GameTooltip:AddLine("Command - runs as you.", 0.7, 0.7, 0.7)
         if def.danger then GameTooltip:AddLine("Asks for confirmation before sending.", 1, 0.45, 0.45) end
         GameTooltip:AddLine("Left-click run  /  Shift-click edit in chat  /  Right-click pin", 0.5, 0.5, 0.5)
         GameTooltip:Show()
@@ -346,13 +347,13 @@ function QOL.CreateCommandRow(parent, def)
 end
 
 -- ─── Vertical / column row layout ──────────────────────────────────────────
-function QOL.LayoutRows(parent, defs, opts)
+function WBC.LayoutRows(parent, defs, opts)
     opts = opts or {}
     local x = opts.x or 8
     local y = -(opts.yTop or 8)
 
     if opts.sectionTitle then
-        local hdr = QOL.CreateSectionHeader(parent, opts.sectionTitle)
+        local hdr = WBC.CreateSectionHeader(parent, opts.sectionTitle)
         hdr:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
         y = y - hdr:GetHeight() - 6
     end
@@ -364,7 +365,7 @@ function QOL.LayoutRows(parent, defs, opts)
     local rowTopMin = startY
 
     for _, def in ipairs(defs) do
-        local row = QOL.CreateCommandRow(parent, def)
+        local row = WBC.CreateCommandRow(parent, def)
         row:SetPoint("TOPLEFT", parent, "TOPLEFT", x + col * colWidth, y)
         row:SetWidth(colWidth - 16)
         if y < rowTopMin then rowTopMin = y end
@@ -379,7 +380,7 @@ function QOL.LayoutRows(parent, defs, opts)
 end
 
 -- ─── Sub-tab strip (the "top tabs" within a left-rail tab) ─────────────────
-function QOL.BuildSubTabs(parent, subTabsDef, dbKey)
+function WBC.BuildSubTabs(parent, subTabsDef, dbKey)
     local strip = CreateFrame("Frame", nil, parent)
     strip:SetPoint("TOPLEFT", parent, "TOPLEFT", 4, -2)
     strip:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -4, -2)
@@ -408,7 +409,7 @@ function QOL.BuildSubTabs(parent, subTabsDef, dbKey)
                 e.contentFrame:Hide()
             end
         end
-        if dbKey and QOL.db then QOL.db.subTabs[dbKey] = idx end
+        if dbKey and WBC.db then WBC.db.subTabs[dbKey] = idx end
     end
 
     local sizer = strip:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -416,7 +417,7 @@ function QOL.BuildSubTabs(parent, subTabsDef, dbKey)
     for i, def in ipairs(subTabsDef) do
         sizer:SetText(def.label)
         local w = math.max(54, math.ceil(sizer:GetStringWidth()) + 18)
-        local btn = QOL.MakeFlatButton(strip, w, 20, def.label, { justify = "CENTER", padLeft = 4 })
+        local btn = WBC.MakeFlatButton(strip, w, 20, def.label, { justify = "CENTER", padLeft = 4 })
         if prev then btn:SetPoint("LEFT", prev, "RIGHT", 4, 0)
         else btn:SetPoint("LEFT", strip, "LEFT", 0, 0) end
         prev = btn
@@ -425,7 +426,7 @@ function QOL.BuildSubTabs(parent, subTabsDef, dbKey)
         content:SetAllPoints(subContent)
         content:Hide()
 
-        if def.rows then QOL.LayoutRows(content, def.rows, def.layoutOpts or {}) end
+        if def.rows then WBC.LayoutRows(content, def.rows, def.layoutOpts or {}) end
         if def.builder then
             local ok, err = pcall(def.builder, content)
             if not ok then
@@ -438,57 +439,17 @@ function QOL.BuildSubTabs(parent, subTabsDef, dbKey)
     end
     sizer:Hide()
 
-    QOL.db.subTabs = QOL.db.subTabs or {}
-    local saved = (dbKey and QOL.db.subTabs[dbKey]) or 1
+    WBC.db.subTabs = WBC.db.subTabs or {}
+    local saved = (dbKey and WBC.db.subTabs[dbKey]) or 1
     if not entries[saved] then saved = 1 end
     selectSub(saved)
 end
 
--- ─── Bot-order scope selector ──────────────────────────────────────────────
-QOL._scopeSelectors = {}
-function QOL.RefreshScopeSelectors()
-    for _, s in ipairs(QOL._scopeSelectors) do if s.refresh then s.refresh() end end
-end
-
-function QOL.MakeScopeSelector(parent)
-    local bar = CreateFrame("Frame", nil, parent)
-    bar:SetHeight(24)
-
-    local lbl = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    lbl:SetPoint("LEFT", bar, "LEFT", 4, 0)
-    lbl:SetText(QOL.colors.muted .. "Send $ orders to:" .. QOL.colors.reset)
-
-    local allBtn = QOL.MakeFlatButton(bar, 150, 20, "All my bots (party)", { justify = "CENTER" })
-    allBtn:SetPoint("LEFT", lbl, "RIGHT", 8, 0)
-    local whisBtn = QOL.MakeFlatButton(bar, 160, 20, "Targeted bot (whisper)", { justify = "CENTER" })
-    whisBtn:SetPoint("LEFT", allBtn, "RIGHT", 6, 0)
-
-    local note = bar:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    note:SetPoint("LEFT", whisBtn, "RIGHT", 12, 0)
-    note:SetText("Whisper needs a bot targeted")
-
-    local function refresh()
-        if QOL.GetBotScope() == "whisper" then
-            whisBtn.bg:SetTexture(0.10, 0.30, 0.40, 0.95); whisBtn.label:SetTextColor(1, 0.82, 0.30)
-            allBtn.bg:SetTexture(0.13, 0.15, 0.19, 0.95);  allBtn.label:SetTextColor(0.82, 0.82, 0.82)
-        else
-            allBtn.bg:SetTexture(0.10, 0.30, 0.40, 0.95);  allBtn.label:SetTextColor(1, 0.82, 0.30)
-            whisBtn.bg:SetTexture(0.13, 0.15, 0.19, 0.95); whisBtn.label:SetTextColor(0.82, 0.82, 0.82)
-        end
-    end
-    allBtn:SetScript("OnClick", function() QOL.SetBotScope("all") end)
-    whisBtn:SetScript("OnClick", function() QOL.SetBotScope("whisper") end)
-    bar.refresh = refresh
-    table.insert(QOL._scopeSelectors, bar)
-    refresh()
-    return bar
-end
-
 -- ─── Scrollable content holder ─────────────────────────────────────────────
 local scrollSeq = 0
-function QOL.CreateScrollContent(parent)
+function WBC.CreateScrollContent(parent)
     scrollSeq = scrollSeq + 1
-    local scroll = CreateFrame("ScrollFrame", "QOL_Scroll" .. scrollSeq, parent, "UIPanelScrollFrameTemplate")
+    local scroll = CreateFrame("ScrollFrame", "WBC_Scroll" .. scrollSeq, parent, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", parent, "TOPLEFT", 4, -4)
     scroll:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -28, 4)
 
@@ -515,4 +476,4 @@ function QOL.CreateScrollContent(parent)
     return scroll, content
 end
 
-QOL.ROW_HEIGHT = ROW_HEIGHT
+WBC.ROW_HEIGHT = ROW_HEIGHT

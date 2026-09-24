@@ -1,9 +1,7 @@
 /*
- * GOMove — AzerothCore port
- * Original by Rochet2 (TrinityCore 3.3.5)
- * Ported and adapted for AzerothCore
+ * Warband Camp — Native 3D Construction & Housing Module
+ * Camp Builder & GameObject Manipulation Engine
  *
- * Integrated with Warband Camp:
  * Normal players operate in Camp Builder Mode on camp-owned objects.
  * Game Masters retain unrestricted Admin Mode on world objects.
  */
@@ -572,7 +570,7 @@ public:
 class GOMove_world_script : public WorldScript
 {
 public:
-    GOMove_world_script() : WorldScript("GOMove_world_script") { }
+    GOMove_world_script() : WorldScript("GOMove_world_script", { WORLDHOOK_ON_STARTUP }) { }
 
     void OnStartup() override
     {
@@ -587,7 +585,7 @@ public:
 class GOMove_player_track : public PlayerScript
 {
 public:
-    GOMove_player_track() : PlayerScript("GOMove_player_track") { }
+    GOMove_player_track() : PlayerScript("GOMove_player_track", { PLAYERHOOK_ON_LOGIN, PLAYERHOOK_ON_LOGOUT }) { }
 
     void OnPlayerLogin(Player* player) override
     {

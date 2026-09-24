@@ -551,7 +551,7 @@ spawnBtn:SetScript("OnClick", function()
     end
     if spawnSpell then
         GOMove:Move("SPAWNSPELL", selectedEntry)
-        CastSpellByID(27651)
+        -- CastSpellByID omitted to prevent UI action taint
     else
         GOMove:Move("SPAWN", selectedEntry)
     end
@@ -655,3 +655,6 @@ if not ok then
 end
 
 -- Browse button is created in GOMoveScripts.lua (references GOMove_BrowseFrame by global name)
+
+
+WarbandCamp_ToggleBrowser = GOMove_ToggleBrowser

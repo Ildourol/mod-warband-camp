@@ -1,20 +1,20 @@
--- QOLAddon/UI/MainFrame.lua
+-- WarbandCamp/UI/MainFrame.lua
 -- Movable parent window: header, left tab rail ("left menu"), content area
--- (each tab hangs its own "top tabs" inside), and a footer legend.
+-- (each tab hangs its own content inside), and a footer with manual command bar.
 
-local addonName, QOL = ...
+local addonName, WBC = ...
 
 local FRAME_W, FRAME_H = 900, 560
 local HEADER_H = 32
 local RAIL_W   = 120
 local FOOTER_H = 22
 
-QOL.tabs = {}   -- { id, label, builder, onShow, button, contentFrame }
+WBC.tabs = {}   -- { id, label, builder, onShow, button, contentFrame }
 
-function QOL.RegisterTab(def) table.insert(QOL.tabs, def) end
+function WBC.RegisterTab(def) table.insert(WBC.tabs, def) end
 
 local function selectTab(index)
-    local tabs = QOL.tabs
+    local tabs = WBC.tabs
     if not tabs[index] then return end
     for i, tab in ipairs(tabs) do
         if tab.button then
@@ -33,12 +33,12 @@ local function selectTab(index)
         end
     end
     if tabs[index].onShow then pcall(tabs[index].onShow) end
-    if QOL.db then QOL.db.activeTab = index end
+    if WBC.db then WBC.db.activeTab = index end
 end
-QOL.SelectTab = selectTab
+WBC.SelectTab = selectTab
 
-function QOL.SelectTabById(id)
-    for i, tab in ipairs(QOL.tabs) do
+function WBC.SelectTabById(id)
+    for i, tab in ipairs(WBC.tabs) do
         if tab.id == id then selectTab(i); return i end
     end
 end
@@ -48,13 +48,13 @@ local function buildRail(main)
     rail:SetPoint("TOPLEFT", main, "TOPLEFT", 6, -HEADER_H - 4)
     rail:SetPoint("BOTTOMLEFT", main, "BOTTOMLEFT", 6, FOOTER_H + 4)
     rail:SetWidth(RAIL_W)
-    QOL.ApplyBackdrop(rail, "inset", 0.5, 0.02, 0.03, 0.05)
+    WBC.ApplyBackdrop(rail, "inset", 0.5, 0.02, 0.03, 0.05)
     main.rail = rail
     return rail
 end
 
 local function buildAllTabs()
-    local main = QOLAddon_MainFrame
+    local main = WarbandCamp_MainFrame
     local rail = main.rail
 
     local content = CreateFrame("Frame", nil, main)
@@ -63,9 +63,9 @@ local function buildAllTabs()
     main.contentArea = content
 
     local prev
-    for i, tab in ipairs(QOL.tabs) do
+    for i, tab in ipairs(WBC.tabs) do
         local label = tab.label
-        local btn = QOL.MakeFlatButton(rail, RAIL_W - 12, 30, label, { padLeft = 10, font = "GameFontNormal" })
+        local btn = WBC.MakeFlatButton(rail, RAIL_W - 12, 30, label, { padLeft = 10, font = "GameFontNormal" })
         btn.bg:SetTexture(0, 0, 0, 0)
 
         -- Left selection accent bar (shown only on the active tab).
@@ -91,22 +91,23 @@ local function buildAllTabs()
         if tab.builder then
             local ok, err = pcall(tab.builder, cf)
             if not ok then
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff5555QOL tab '" .. tostring(tab.label) .. "' build error:|r " .. tostring(err))
+                DEFAULT_CHAT_FRAME:AddMessage("|cffff5555WarbandCamp tab '" .. tostring(tab.label) .. "' build error:|r " .. tostring(err))
             end
         end
     end
 
-    selectTab((QOL.db and QOL.db.activeTab) or 1)
+    selectTab((WBC.db and WBC.db.activeTab) or 1)
 end
 
-function QOL.RestoreMainFramePosition()
-    if QOLAddon_MainFrame then
-        QOL.RestoreFramePoint(QOLAddon_MainFrame, "frame", QOL.defaults.frame)
+function WBC.RestoreMainFramePosition()
+    if WarbandCamp_MainFrame then
+        WBC.RestoreFramePoint(WarbandCamp_MainFrame, "frame", WBC.defaults.frame)
     end
 end
 
 local function createMainFrame()
-    local f = CreateFrame("Frame", "QOLAddon_MainFrame", UIParent)
+    local f = CreateFrame("Frame", "WarbandCamp_MainFrame", UIParent)
+    _G.QOLAddon_MainFrame = f   -- compatibility alias
     f:SetSize(FRAME_W, FRAME_H)
     f:SetFrameStrata("HIGH")
     f:SetToplevel(true)
@@ -115,23 +116,22 @@ local function createMainFrame()
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
     f:SetScript("OnDragStart", function(self) self:StartMoving() end)
-    f:SetScript("OnDragStop", function(self) self:StopMovingOrSizing(); QOL.SaveFramePoint(self, "frame") end)
-    f:SetScript("OnShow", function() if QOL.db and QOL.db.frame then QOL.db.frame.shown = true end end)
-    f:SetScript("OnHide", function() if QOL.db and QOL.db.frame then QOL.db.frame.shown = false end end)
-    QOL.ApplyBackdrop(f, "panel", 0.95)
+    f:SetScript("OnDragStop", function(self) self:StopMovingOrSizing(); WBC.SaveFramePoint(self, "frame") end)
+    f:SetScript("OnShow", function() if WBC.db and WBC.db.frame then WBC.db.frame.shown = true end end)
+    f:SetScript("OnHide", function() if WBC.db and WBC.db.frame then WBC.db.frame.shown = false end end)
+    WBC.ApplyBackdrop(f, "panel", 0.95)
 
     -- Header
     local header = CreateFrame("Frame", nil, f)
     header:SetPoint("TOPLEFT", f, "TOPLEFT", 6, -6)
     header:SetPoint("TOPRIGHT", f, "TOPRIGHT", -6, -6)
     header:SetHeight(HEADER_H)
-    QOL.ApplyBackdrop(header, "inset", 0.6, 0.06, 0.09, 0.12)
+    WBC.ApplyBackdrop(header, "inset", 0.6, 0.06, 0.09, 0.12)
 
     local title = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("LEFT", header, "LEFT", 12, 0)
-    title:SetText(QOL.colors.brand .. "QOL" .. QOL.colors.reset .. " " ..
-        QOL.colors.white .. "Addon" .. QOL.colors.reset ..
-        "  " .. QOL.colors.muted .. "v" .. QOL.version .. QOL.colors.reset)
+    title:SetText(WBC.colors.brand .. "Warband Camp" .. WBC.colors.reset ..
+        "  " .. WBC.colors.muted .. "v" .. WBC.version .. WBC.colors.reset)
 
     local close = CreateFrame("Button", nil, header, "UIPanelCloseButton")
     close:SetPoint("RIGHT", header, "RIGHT", 2, 0)
@@ -143,9 +143,9 @@ local function createMainFrame()
     local function updateTarget()
         local n = UnitName("target")
         if n and n ~= "" then
-            targetFS:SetText(QOL.colors.muted .. "Target: " .. QOL.colors.reset .. QOL.colors.accent .. n .. QOL.colors.reset)
+            targetFS:SetText(WBC.colors.muted .. "Target: " .. WBC.colors.reset .. WBC.colors.accent .. n .. WBC.colors.reset)
         else
-            targetFS:SetText(QOL.colors.muted .. "No target" .. QOL.colors.reset)
+            targetFS:SetText(WBC.colors.muted .. "No target" .. WBC.colors.reset)
         end
     end
     f:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -160,25 +160,19 @@ local function createMainFrame()
     footer:SetHeight(FOOTER_H)
     local legend = footer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     legend:SetPoint("LEFT", footer, "LEFT", 4, 0)
-    legend:SetText(
-        QOL.cats.player.color .. QOL.cats.player.name .. QOL.colors.reset .. "   " ..
-        QOL.cats.bot.color    .. QOL.cats.bot.name    .. QOL.colors.reset)
+    legend:SetText(WBC.cats.player.color .. WBC.cats.player.name .. WBC.colors.reset)
 
-    -- Manual command bar (run any dot-command or bot-order directly)
-    local runBtn = QOL.MakeFlatButton(footer, 50, FOOTER_H - 2, "Send", { justify = "CENTER" })
+    -- Manual command bar (run any dot-command directly)
+    local runBtn = WBC.MakeFlatButton(footer, 50, FOOTER_H - 2, "Send", { justify = "CENTER" })
     runBtn:SetPoint("RIGHT", footer, "RIGHT", -2, 0)
 
-    local cmdBox = QOL.MakeFlatEditBox(footer, 420, FOOTER_H - 2, "Manual command (.camp, .playerbots, $order...)")
+    local cmdBox = WBC.MakeFlatEditBox(footer, 420, FOOTER_H - 2, "Manual command (.camp, .gomove...)")
     cmdBox:SetPoint("RIGHT", runBtn, "LEFT", -6, 0)
 
     local function runManualCommand()
-        local text = QOL.Trim(cmdBox:GetText() or "")
+        local text = WBC.Trim(cmdBox:GetText() or "")
         if text == "" then return end
-        if text:sub(1, 1) == "$" then
-            QOL.RunBotOrder(text:sub(2))
-        else
-            QOL.RunCommand(text)
-        end
+        WBC.RunCommand(text)
         cmdBox:SetText("")
         if cmdBox.refreshHint then cmdBox.refreshHint() end
     end
@@ -193,7 +187,7 @@ local function createMainFrame()
     cmdBox:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText("Manual Command Bar", 1, 0.82, 0.30)
-        GameTooltip:AddLine("Type any server command (e.g. .camp ..., .clear ...) or bot order ($...) directly from QOLAddon.", 1, 1, 1, true)
+        GameTooltip:AddLine("Type any server command (e.g. .camp ..., .gomove ...) directly from Warband Camp.", 1, 1, 1, true)
         GameTooltip:AddLine("Press Enter or click Send to execute.", 0.6, 0.8, 1, true)
         GameTooltip:Show()
     end)
@@ -205,16 +199,16 @@ local function createMainFrame()
     return f
 end
 
-QOL.AddLogin(function()
-    if not QOLAddon_MainFrame then createMainFrame() end
-    QOL.RestoreMainFramePosition()
+WBC.AddLogin(function()
+    if not WarbandCamp_MainFrame then createMainFrame() end
+    WBC.RestoreMainFramePosition()
     buildAllTabs()
-    if QOL.db and QOL.db.frame and QOL.db.frame.shown then QOLAddon_MainFrame:Show() end
+    if WBC.db and WBC.db.frame and WBC.db.frame.shown then WarbandCamp_MainFrame:Show() end
 end)
 
 -- Create the shell early so tab files can reference it; surface load errors.
 local ok, err = pcall(createMainFrame)
 if not ok then
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000QOL MainFrame ERROR:|r " .. tostring(err))
-    QOL._mainFrameLoadError = tostring(err)
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000WarbandCamp MainFrame ERROR:|r " .. tostring(err))
+    WBC._mainFrameLoadError = tostring(err)
 end

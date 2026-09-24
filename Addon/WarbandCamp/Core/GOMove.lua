@@ -1,9 +1,9 @@
--- QOLAddon/Core/GOMove.lua
--- Complete GOMove client engine ported into QOLAddon.
+-- WarbandCamp/Core/GOMove.lua
+-- Complete GOMove client engine ported into WarbandCamp.
 -- Preserves all original GOMove tables, functions, data structures, protocol handling,
 -- floating utility windows, and /gomove slash command.
 
-local addonName, QOL = ...
+local addonName, WBC = ...
 
 GOMove = GOMove or {Frames = {}, Inputs = {}}
 _G.GOMove = GOMove

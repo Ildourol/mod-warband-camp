@@ -1,9 +1,9 @@
 ## Interface: 30300
-## Title: |cffffc94dQOL|r Addon
-## Notes: In-game player toolkit for WotLK 3.3.5a / AzerothCore — build & command a party of AI bots, set their roles, run dungeons (or let a tank bot clear them for you with Dungeon Clear), and manage your Warband Camp. Sends only your own commands; needs no special permissions.
+## Title: |cffffc94dWarband Camp|r
+## Notes: In-game camp management & 3D construction toolkit for AzerothCore (mod-warband-camp).
 ## Author: AzerothCore
 ## Version: 1.0.0
-## SavedVariables: QOLAddon_DB, GOMoveSV
+## SavedVariables: WarbandCampDB, GOMoveSV
 ## DefaultState: enabled
 
 # ─── Core ─────────────────────────────────────────────────────────────────
@@ -11,27 +11,23 @@ Core\Init.lua
 Core\Util.lua
 Core\SavedVars.lua
 Core\CommandRunner.lua
-Core\DungeonClear.lua
 Core\Warband.lua
 Core\GOMove.lua
 
 # ─── Data ─────────────────────────────────────────────────────────────────
-Data\Specs.lua
 Data\WarbandProps.lua
 
 # ─── UI primitives ────────────────────────────────────────────────────────
 UI\ConfirmDialog.lua
 UI\Widgets.lua
-UI\GOMoveBrowser.lua
+UI\CampObjectBrowser.lua
 UI\MainFrame.lua
 
 # ─── Tabs (registration order = display order) ────────────────────────────
-UI\Tabs\Bots.lua
-UI\Tabs\DungeonClear.lua
-UI\Tabs\Warband.lua
-UI\Tabs\GOMove.lua
+UI\Tabs\Camp.lua
+UI\Tabs\Builder.lua
 UI\Tabs\Favorites.lua
 UI\Tabs\History.lua
 
-# ─── Launcher (last so MainFrame exists) ──────────────────────────────────
+# ─── Launcher ─────────────────────────────────────────────────────────────
 UI\ToggleButton.lua

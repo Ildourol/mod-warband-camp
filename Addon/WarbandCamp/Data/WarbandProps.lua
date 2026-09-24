@@ -1,10 +1,10 @@
--- QOLAddon/Data/WarbandProps.lua
+-- WarbandCamp/Data/WarbandProps.lua
 -- The Warband Camp prop & NPC catalogue: category -> { key, label } pairs.
 -- key = what `.camp place <key>` expects · label = what the player sees.
 
-local addonName, QOL = ...
+local addonName, WBC = ...
 
-QOL.WarbandProps = {
+WBC.WarbandProps = {
     catalogueVersion = "1.4.0",
     categories = {
         { name = "Shelter", props = {
@@ -164,15 +164,15 @@ QOL.WarbandProps = {
 }
 
 -- Category names for the first dropdown.
-function QOL.WarbandProps.CategoryNames()
+function WBC.WarbandProps.CategoryNames()
     local out = {}
-    for i, cat in ipairs(QOL.WarbandProps.categories) do out[i] = cat.name end
+    for i, cat in ipairs(WBC.WarbandProps.categories) do out[i] = cat.name end
     return out
 end
 
 -- {text=label, value=key} choices for one category name (nil if unknown).
-function QOL.WarbandProps.PropChoices(catName)
-    for _, cat in ipairs(QOL.WarbandProps.categories) do
+function WBC.WarbandProps.PropChoices(catName)
+    for _, cat in ipairs(WBC.WarbandProps.categories) do
         if cat.name == catName then
             local out = {}
             for i, p in ipairs(cat.props) do out[i] = { text = p[2], value = p[1] } end

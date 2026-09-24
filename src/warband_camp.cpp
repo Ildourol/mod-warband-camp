@@ -515,7 +515,7 @@ PropDef const g_propCatalogue[] =
     // Camp State
     // ---------------------------------------------------------------------
 
-    std::mutex g_campMutex;
+    std::recursive_mutex g_campMutex;
 
     enum CampPrivacy : uint8
     {
@@ -535,6 +535,8 @@ PropDef const g_propCatalogue[] =
         uint8 privacy = PRIVACY_PUBLIC;
         std::string greeting;
         uint32 lastActive = 0;
+        std::vector<WarbandCamp::CampObjectRecord> objects;
+        std::vector<WarbandCamp::CampCreatureRecord> creatures;
     };
 
     std::vector<Camp> g_camps;
@@ -760,72 +762,49 @@ PropDef const g_propCatalogue[] =
     {
         uint32 const phaseMask = 1u << camp.phaseBit;
 
-        // Props
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT id, entry, pos_x, pos_y, pos_z, orientation, scale "
-                "FROM mod_warband_camp_object WHERE account_id = {}",
-                camp.accountId))
+        // Props from in-memory cache
+        uint32 spawned = 0;
+        for (WarbandCamp::CampObjectRecord const& obj : camp.objects)
         {
-            uint32 spawned = 0;
-            do
+            auto const it = g_liveProps.find(obj.id);
+            if (it != g_liveProps.end())
             {
-                Field* f = r->Fetch();
-                uint64 const id = f[0].Get<uint64>();
-                float const scale = (f[6].IsNull() ? 1.0f : f[6].Get<float>());
-
-                auto const it = g_liveProps.find(id);
-                if (it != g_liveProps.end())
-                {
-                    if (map->GetGameObject(it->second))
-                        continue;
-                    g_guidToPropId.erase(it->second);
-                    g_liveProps.erase(it);
-                }
-
-                ObjectGuid const guid = SpawnProp(map, f[1].Get<uint32>(),
-                    f[2].Get<float>(), f[3].Get<float>(), f[4].Get<float>(),
-                    f[5].Get<float>(), phaseMask, scale);
-
-                if (guid)
-                {
-                    g_liveProps[id] = guid;
-                    g_guidToPropId[guid] = id;
-                    ++spawned;
-                }
+                if (map->GetGameObject(it->second))
+                    continue;
+                g_guidToPropId.erase(it->second);
+                g_liveProps.erase(it);
             }
-            while (r->NextRow());
 
-            if (spawned)
-                LOG_DEBUG("server", "[warbandcamp] materialised {} props for account {}", spawned, camp.accountId);
+            ObjectGuid const guid = SpawnProp(map, obj.entry, obj.x, obj.y, obj.z,
+                obj.orientation, phaseMask, obj.scale);
+
+            if (guid)
+            {
+                g_liveProps[obj.id] = guid;
+                g_guidToPropId[guid] = obj.id;
+                ++spawned;
+            }
         }
 
-        // Phased Creatures (e.g. Training Dummies)
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT id, entry, pos_x, pos_y, pos_z, orientation "
-                "FROM mod_warband_camp_creature WHERE account_id = {}",
-                camp.accountId))
+        if (spawned)
+            LOG_DEBUG("server", "[warbandcamp] materialised {} props for account {}", spawned, camp.accountId);
+
+        // Phased Creatures (e.g. Training Dummies) from in-memory cache
+        for (WarbandCamp::CampCreatureRecord const& cr : camp.creatures)
         {
-            do
+            auto const it = g_liveCreatures.find(cr.id);
+            if (it != g_liveCreatures.end())
             {
-                Field* f = r->Fetch();
-                uint64 const id = f[0].Get<uint64>();
-
-                auto const it = g_liveCreatures.find(id);
-                if (it != g_liveCreatures.end())
-                {
-                    if (map->GetCreature(it->second))
-                        continue;
-                    g_liveCreatures.erase(it);
-                }
-
-                ObjectGuid const guid = SpawnCampCreature(map, f[1].Get<uint32>(),
-                    f[2].Get<float>(), f[3].Get<float>(), f[4].Get<float>(),
-                    f[5].Get<float>(), phaseMask);
-
-                if (guid)
-                    g_liveCreatures[id] = guid;
+                if (map->GetCreature(it->second))
+                    continue;
+                g_liveCreatures.erase(it);
             }
-            while (r->NextRow());
+
+            ObjectGuid const guid = SpawnCampCreature(map, cr.entry, cr.x, cr.y, cr.z,
+                cr.orientation, phaseMask);
+
+            if (guid)
+                g_liveCreatures[cr.id] = guid;
         }
     }
 
@@ -855,10 +834,13 @@ PropDef const g_propCatalogue[] =
         if (it == g_liveCreatures.end())
             return;
 
-        if (Creature* cr = map->GetCreature(it->second))
+        if (map)
         {
-            cr->SetRespawnTime(0);
-            cr->DespawnOrUnsummon();
+            if (Creature* cr = map->GetCreature(it->second))
+            {
+                cr->SetRespawnTime(0);
+                cr->DespawnOrUnsummon();
+            }
         }
         g_liveCreatures.erase(it);
     }
@@ -1158,9 +1140,14 @@ namespace WarbandCamp
         return g_enabled.load();
     }
 
-    bool IsGOMoveBuildingEnabled()
+    bool IsBuildingEnabled()
     {
         return g_enableGOMoveBuilding.load();
+    }
+
+    bool IsGOMoveBuildingEnabled()
+    {
+        return IsBuildingEnabled();
     }
 
     uint32 GetMaxProps()
@@ -1170,7 +1157,7 @@ namespace WarbandCamp
 
     bool HasCamp(uint32 accountId)
     {
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         return FindCamp(accountId) != nullptr;
     }
 
@@ -1179,7 +1166,7 @@ namespace WarbandCamp
         if (!player)
             return false;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         uint32 const accountId = player->GetSession()->GetAccountId();
         Camp const* camp = FindCamp(accountId);
         if (!camp || player->GetMapId() != camp->map)
@@ -1193,7 +1180,7 @@ namespace WarbandCamp
         if (!player)
             return false;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         uint32 const accountId = player->GetSession()->GetAccountId();
         Camp const* camp = FindCamp(accountId);
         if (!camp || player->GetMapId() != camp->map)
@@ -1204,21 +1191,17 @@ namespace WarbandCamp
 
     uint32 GetCampPhaseMask(uint32 accountId)
     {
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         Camp const* camp = FindCamp(accountId);
         return camp ? (1u << camp->phaseBit) : PHASEMASK_NORMAL;
     }
 
     uint32 GetCampPropCount(uint32 accountId)
     {
-        uint32 count = 0;
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT COUNT(*) FROM mod_warband_camp_object WHERE account_id = {}", accountId))
-            count = r->Fetch()[0].Get<uint32>();
-        if (QueryResult rc = CharacterDatabase.Query(
-                "SELECT COUNT(*) FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
-            count += rc->Fetch()[0].Get<uint32>();
-        return count;
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
+        if (Camp const* c = FindCamp(accountId))
+            return static_cast<uint32>(c->objects.size() + c->creatures.size());
+        return 0;
     }
 
     bool IsEntryAllowedForCamp(uint32 entry, bool isGM, std::string& outError)
@@ -1267,48 +1250,40 @@ namespace WarbandCamp
 
     bool GetCampObject(uint32 accountId, uint64 propId, CampObjectRecord& outRecord)
     {
-        std::string query;
-        if (accountId != 0)
-            query = Acore::StringFormat(
-                "SELECT id, account_id, spawn_guid, entry, pos_x, pos_y, pos_z, orientation, scale "
-                "FROM mod_warband_camp_object WHERE id = {} AND account_id = {}", propId, accountId);
-        else
-            query = Acore::StringFormat(
-                "SELECT id, account_id, spawn_guid, entry, pos_x, pos_y, pos_z, orientation, scale "
-                "FROM mod_warband_camp_object WHERE id = {}", propId);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
+        for (Camp const& c : g_camps)
+        {
+            if (accountId != 0 && c.accountId != accountId)
+                continue;
 
-        QueryResult r = CharacterDatabase.Query(query);
-        if (!r)
-            return false;
-
-        Field* f = r->Fetch();
-        outRecord.id = f[0].Get<uint64>();
-        outRecord.accountId = f[1].Get<uint32>();
-        outRecord.spawnGuid = f[2].Get<uint32>();
-        outRecord.entry = f[3].Get<uint32>();
-        outRecord.x = f[4].Get<float>();
-        outRecord.y = f[5].Get<float>();
-        outRecord.z = f[6].Get<float>();
-        outRecord.orientation = f[7].Get<float>();
-        outRecord.scale = f[8].IsNull() ? 1.0f : f[8].Get<float>();
-
-        std::lock_guard<std::mutex> lock(g_campMutex);
-        Camp const* c = FindCamp(outRecord.accountId);
-        outRecord.map = c ? c->map : 0;
-        outRecord.phaseMask = c ? (1u << c->phaseBit) : PHASEMASK_NORMAL;
-
-        auto const it = g_liveProps.find(propId);
-        if (it != g_liveProps.end())
-            outRecord.liveGuid = it->second;
-
-        return true;
+            for (WarbandCamp::CampObjectRecord const& obj : c.objects)
+            {
+                if (obj.id == propId)
+                {
+                    outRecord = obj;
+                    outRecord.map = c.map;
+                    outRecord.phaseMask = 1u << c.phaseBit;
+                    auto const it = g_liveProps.find(propId);
+                    outRecord.liveGuid = (it != g_liveProps.end()) ? it->second : ObjectGuid::Empty;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     bool IsCampObjectOwnedByAccount(uint32 accountId, uint64 propId)
     {
-        QueryResult r = CharacterDatabase.Query(
-            "SELECT 1 FROM mod_warband_camp_object WHERE id = {} AND account_id = {}", propId, accountId);
-        return (r != nullptr);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
+        if (Camp const* c = FindCamp(accountId))
+        {
+            for (WarbandCamp::CampObjectRecord const& obj : c->objects)
+            {
+                if (obj.id == propId)
+                    return true;
+            }
+        }
+        return false;
     }
 
     uint64 FindNearestCampObject(Player* player, float maxDist)
@@ -1316,7 +1291,7 @@ namespace WarbandCamp
         if (!player)
             return 0;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         uint32 const accountId = player->GetSession()->GetAccountId();
         Camp const* camp = FindCamp(accountId);
         if (!camp || player->GetMapId() != camp->map)
@@ -1329,27 +1304,21 @@ namespace WarbandCamp
         uint64 bestId = 0;
         float bestDist = maxDist;
 
-        for (auto const& pair : g_liveProps)
+        for (WarbandCamp::CampObjectRecord const& obj : camp->objects)
         {
-            uint64 const propId = pair.first;
-            ObjectGuid const guid = pair.second;
+            auto const it = g_liveProps.find(obj.id);
+            if (it == g_liveProps.end())
+                continue;
 
-            GameObject* go = map->GetGameObject(guid);
+            GameObject* go = map->GetGameObject(it->second);
             if (!go)
                 continue;
 
             float const d = player->GetDistance(go);
             if (d < bestDist)
             {
-                if (QueryResult r = CharacterDatabase.Query(
-                        "SELECT account_id FROM mod_warband_camp_object WHERE id = {}", propId))
-                {
-                    if (r->Fetch()[0].Get<uint32>() == accountId)
-                    {
-                        bestDist = d;
-                        bestId = propId;
-                    }
-                }
+                bestDist = d;
+                bestId = obj.id;
             }
         }
 
@@ -1362,7 +1331,7 @@ namespace WarbandCamp
         if (!player)
             return result;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         uint32 const accountId = player->GetSession()->GetAccountId();
         Camp const* camp = FindCamp(accountId);
         if (!camp || player->GetMapId() != camp->map)
@@ -1372,25 +1341,19 @@ namespace WarbandCamp
         if (!map)
             return result;
 
-        for (auto const& pair : g_liveProps)
+        for (WarbandCamp::CampObjectRecord const& obj : camp->objects)
         {
-            uint64 const propId = pair.first;
-            ObjectGuid const guid = pair.second;
+            auto const it = g_liveProps.find(obj.id);
+            if (it == g_liveProps.end())
+                continue;
 
-            GameObject* go = map->GetGameObject(guid);
+            GameObject* go = map->GetGameObject(it->second);
             if (!go)
                 continue;
 
             float const d = player->GetDistance(go);
             if (d <= range)
-            {
-                if (QueryResult r = CharacterDatabase.Query(
-                        "SELECT account_id FROM mod_warband_camp_object WHERE id = {}", propId))
-                {
-                    if (r->Fetch()[0].Get<uint32>() == accountId)
-                        result.push_back(propId);
-                }
-            }
+                result.push_back(obj.id);
         }
 
         return result;
@@ -1401,7 +1364,7 @@ namespace WarbandCamp
         if (!player)
             return nullptr;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         auto const it = g_liveProps.find(propId);
         if (it == g_liveProps.end())
             return nullptr;
@@ -1415,7 +1378,7 @@ namespace WarbandCamp
         if (!go)
             return 0;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         auto const it = g_guidToPropId.find(go->GetGUID());
         return (it != g_guidToPropId.end()) ? it->second : 0;
     }
@@ -1428,7 +1391,7 @@ namespace WarbandCamp
             return 0;
         }
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         if (!g_enabled.load())
         {
@@ -1437,7 +1400,7 @@ namespace WarbandCamp
         }
 
         uint32 const accountId = player->GetSession()->GetAccountId();
-        Camp const* camp = FindCamp(accountId);
+        Camp* camp = FindCamp(accountId);
         if (!camp)
         {
             outError = "You have no camp. Use .camp claim to establish one.";
@@ -1468,22 +1431,17 @@ namespace WarbandCamp
                 return 0;
             }
 
-            if (QueryResult mr = CharacterDatabase.Query(
-                    "SELECT id FROM mod_warband_camp_object WHERE account_id = {} AND entry = 142103 LIMIT 1", accountId))
+            for (WarbandCamp::CampObjectRecord const& obj : camp->objects)
             {
-                outError = "You already have a mailbox in your camp (limit: 1).";
-                return 0;
+                if (obj.entry == 142103)
+                {
+                    outError = "You already have a mailbox in your camp (limit: 1).";
+                    return 0;
+                }
             }
         }
 
-        uint32 count = 0;
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT COUNT(*) FROM mod_warband_camp_object WHERE account_id = {}", accountId))
-            count = r->Fetch()[0].Get<uint32>();
-        if (QueryResult rc = CharacterDatabase.Query(
-                "SELECT COUNT(*) FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
-            count += rc->Fetch()[0].Get<uint32>();
-
+        uint32 const count = static_cast<uint32>(camp->objects.size() + camp->creatures.size());
         uint32 const maxProps = g_maxProps.load();
         if (maxProps && count >= maxProps)
         {
@@ -1513,7 +1471,7 @@ namespace WarbandCamp
             return 0;
         }
 
-        CharacterDatabase.DirectExecute(
+        CharacterDatabase.Execute(
             "UPDATE mod_warband_camp_object SET spawn_guid = {} WHERE id = {}", id, id);
 
         Map* map = player->GetMap();
@@ -1521,10 +1479,25 @@ namespace WarbandCamp
         ObjectGuid const guid = SpawnProp(map, entry, x, y, z, o, phaseMask, scale);
         if (!guid)
         {
-            CharacterDatabase.DirectExecute("DELETE FROM mod_warband_camp_object WHERE id = {}", id);
+            CharacterDatabase.Execute("DELETE FROM mod_warband_camp_object WHERE id = {}", id);
             outError = "Failed to spawn object in the world.";
             return 0;
         }
+
+        WarbandCamp::CampObjectRecord newObj;
+        newObj.id = id;
+        newObj.accountId = accountId;
+        newObj.spawnGuid = static_cast<uint32>(id);
+        newObj.entry = entry;
+        newObj.map = camp->map;
+        newObj.x = x;
+        newObj.y = y;
+        newObj.z = z;
+        newObj.orientation = o;
+        newObj.scale = scale;
+        newObj.phaseMask = phaseMask;
+        newObj.liveGuid = guid;
+        camp->objects.push_back(newObj);
 
         g_liveProps[id] = guid;
         g_guidToPropId[guid] = id;
@@ -1543,34 +1516,37 @@ namespace WarbandCamp
             return false;
         }
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = player->GetSession()->GetAccountId();
         bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
 
-        QueryResult r = CharacterDatabase.Query(
-            "SELECT account_id, entry, scale FROM mod_warband_camp_object WHERE id = {}", propId);
-        if (!r)
+        Camp* owningCamp = nullptr;
+        WarbandCamp::CampObjectRecord* targetObj = nullptr;
+        for (Camp& c : g_camps)
+        {
+            for (WarbandCamp::CampObjectRecord& obj : c.objects)
+            {
+                if (obj.id == propId)
+                {
+                    owningCamp = &c;
+                    targetObj = &obj;
+                    break;
+                }
+            }
+            if (targetObj)
+                break;
+        }
+
+        if (!targetObj || !owningCamp)
         {
             outError = "Camp object not found.";
             return false;
         }
 
-        Field* f = r->Fetch();
-        uint32 const ownerAccount = f[0].Get<uint32>();
-        uint32 const entry = f[1].Get<uint32>();
-        float const scale = f[2].IsNull() ? 1.0f : f[2].Get<float>();
-
-        if (!isGM && ownerAccount != accountId)
+        if (!isGM && targetObj->accountId != accountId)
         {
             outError = "You can only move objects in your own camp.";
-            return false;
-        }
-
-        Camp const* owningCamp = FindCamp(ownerAccount);
-        if (!owningCamp)
-        {
-            outError = "Owning camp not found.";
             return false;
         }
 
@@ -1587,16 +1563,24 @@ namespace WarbandCamp
             return false;
         }
 
-        CharacterDatabase.DirectExecute(
+        // Update in-memory record immediately
+        targetObj->x = x;
+        targetObj->y = y;
+        targetObj->z = z;
+        targetObj->orientation = o;
+
+        // Async write to database - zero tick stall
+        CharacterDatabase.Execute(
             "UPDATE mod_warband_camp_object SET pos_x = {:.4f}, pos_y = {:.4f}, pos_z = {:.4f}, orientation = {:.4f} WHERE id = {}",
             x, y, z, o, propId);
 
         DespawnProp(map, propId);
 
         uint32 const phaseMask = 1u << owningCamp->phaseBit;
-        ObjectGuid const newGuid = SpawnProp(map, entry, x, y, z, o, phaseMask, scale);
+        ObjectGuid const newGuid = SpawnProp(map, targetObj->entry, x, y, z, o, phaseMask, targetObj->scale);
         if (newGuid)
         {
+            targetObj->liveGuid = newGuid;
             g_liveProps[propId] = newGuid;
             g_guidToPropId[newGuid] = propId;
         }
@@ -1612,43 +1596,45 @@ namespace WarbandCamp
             return false;
         }
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = player->GetSession()->GetAccountId();
         bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
 
-        QueryResult r = CharacterDatabase.Query(
-            "SELECT account_id, entry, pos_x, pos_y, pos_z, orientation FROM mod_warband_camp_object WHERE id = {}", propId);
-        if (!r)
+        Camp* owningCamp = nullptr;
+        WarbandCamp::CampObjectRecord* targetObj = nullptr;
+        for (Camp& c : g_camps)
+        {
+            for (WarbandCamp::CampObjectRecord& obj : c.objects)
+            {
+                if (obj.id == propId)
+                {
+                    owningCamp = &c;
+                    targetObj = &obj;
+                    break;
+                }
+            }
+            if (targetObj)
+                break;
+        }
+
+        if (!targetObj || !owningCamp)
         {
             outError = "Camp object not found.";
             return false;
         }
 
-        Field* f = r->Fetch();
-        uint32 const ownerAccount = f[0].Get<uint32>();
-        uint32 const entry = f[1].Get<uint32>();
-        float const x = f[2].Get<float>();
-        float const y = f[3].Get<float>();
-        float const z = f[4].Get<float>();
-        float const o = f[5].Get<float>();
-
-        if (!isGM && ownerAccount != accountId)
+        if (!isGM && targetObj->accountId != accountId)
         {
             outError = "You can only scale objects in your own camp.";
             return false;
         }
 
-        Camp const* owningCamp = FindCamp(ownerAccount);
-        if (!owningCamp)
-        {
-            outError = "Owning camp not found.";
-            return false;
-        }
-
         float const clampedScale = std::clamp(scale, 0.1f, 5.0f);
+        targetObj->scale = clampedScale;
 
-        CharacterDatabase.DirectExecute(
+        // Async write to database
+        CharacterDatabase.Execute(
             "UPDATE mod_warband_camp_object SET scale = {:.2f} WHERE id = {}", clampedScale, propId);
 
         Map* map = player->GetMap();
@@ -1657,9 +1643,10 @@ namespace WarbandCamp
             DespawnProp(map, propId);
 
             uint32 const phaseMask = 1u << owningCamp->phaseBit;
-            ObjectGuid const newGuid = SpawnProp(map, entry, x, y, z, o, phaseMask, clampedScale);
+            ObjectGuid const newGuid = SpawnProp(map, targetObj->entry, targetObj->x, targetObj->y, targetObj->z, targetObj->orientation, phaseMask, clampedScale);
             if (newGuid)
             {
+                targetObj->liveGuid = newGuid;
                 g_liveProps[propId] = newGuid;
                 g_guidToPropId[newGuid] = propId;
             }
@@ -1676,20 +1663,37 @@ namespace WarbandCamp
             return false;
         }
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = player->GetSession()->GetAccountId();
         bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
 
-        QueryResult r = CharacterDatabase.Query(
-            "SELECT account_id FROM mod_warband_camp_object WHERE id = {}", propId);
-        if (!r)
+        Camp* owningCamp = nullptr;
+        size_t objIdx = 0;
+        bool found = false;
+        for (Camp& c : g_camps)
+        {
+            for (size_t i = 0; i < c.objects.size(); ++i)
+            {
+                if (c.objects[i].id == propId)
+                {
+                    owningCamp = &c;
+                    objIdx = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (found)
+                break;
+        }
+
+        if (!found || !owningCamp)
         {
             outError = "Camp object not found.";
             return false;
         }
 
-        uint32 const ownerAccount = r->Fetch()[0].Get<uint32>();
+        uint32 const ownerAccount = owningCamp->objects[objIdx].accountId;
         if (!isGM && ownerAccount != accountId)
         {
             outError = "You can only delete objects in your own camp.";
@@ -1699,7 +1703,10 @@ namespace WarbandCamp
         Map* map = player->GetMap();
         DespawnProp(map, propId);
 
-        CharacterDatabase.DirectExecute(
+        owningCamp->objects.erase(owningCamp->objects.begin() + objIdx);
+
+        // Async delete from database
+        CharacterDatabase.Execute(
             "DELETE FROM mod_warband_camp_object WHERE id = {}", propId);
 
         auto const itLast = g_lastPlacedProp.find(ownerAccount);
@@ -1713,7 +1720,7 @@ namespace WarbandCamp
 
     void DespawnCampProp(Map* map, uint64 propId)
     {
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         DespawnProp(map, propId);
     }
 }
@@ -1723,7 +1730,7 @@ namespace WarbandCamp
 // -------------------------------------------------------------------------
 extern "C" bool WarbandCampParked(uint32 lowGuid, float& cx, float& cy, float& cz)
 {
-    std::lock_guard<std::mutex> lock(g_campMutex);
+    std::lock_guard<std::recursive_mutex> lock(g_campMutex);
     auto const it = g_parkedAlts.find(lowGuid);
     if (it == g_parkedAlts.end())
         return false;
@@ -1805,13 +1812,7 @@ public:
         if (AreaTableEntry const* area = sAreaTableStore.LookupEntry(c.zoneId))
             zone = area->area_name[0];
 
-        uint32 props = 0;
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT COUNT(*) FROM mod_warband_camp_object WHERE account_id = {}", c.accountId))
-            props = r->Fetch()[0].Get<uint32>();
-        if (QueryResult rc = CharacterDatabase.Query(
-                "SELECT COUNT(*) FROM mod_warband_camp_creature WHERE account_id = {}", c.accountId))
-            props += rc->Fetch()[0].Get<uint32>();
+        uint32 const props = static_cast<uint32>(c.objects.size() + c.creatures.size());
 
         char const* privStr = "Public";
         if (c.privacy == PRIVACY_PARTY)
@@ -1839,7 +1840,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         Camp const* c = FindCamp(me->GetSession()->GetAccountId());
         if (!c)
@@ -1860,7 +1861,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
         if (Camp const* existing = FindCamp(accountId))
@@ -1945,7 +1946,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
         Camp const* found = FindCamp(accountId);
@@ -1987,7 +1988,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
         Camp const* found = FindCamp(accountId);
@@ -2007,40 +2008,34 @@ public:
         }
 
         Map* campMap = sMapMgr->FindBaseMap(camp.map);
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT id FROM mod_warband_camp_object WHERE account_id = {}", accountId))
+        for (WarbandCamp::CampObjectRecord const& obj : camp.objects)
         {
-            do
+            if (campMap)
+                DespawnProp(campMap, obj.id);
+            else
             {
-                uint64 const id = r->Fetch()[0].Get<uint64>();
-                if (campMap)
-                    DespawnProp(campMap, id);
-                else
-                    g_liveProps.erase(id);
+                auto const it = g_liveProps.find(obj.id);
+                if (it != g_liveProps.end())
+                {
+                    g_guidToPropId.erase(it->second);
+                    g_liveProps.erase(it);
+                }
             }
-            while (r->NextRow());
         }
 
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT id FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
+        for (WarbandCamp::CampCreatureRecord const& cr : camp.creatures)
         {
-            do
-            {
-                uint64 const id = r->Fetch()[0].Get<uint64>();
-                if (campMap)
-                    DespawnCampCreature(campMap, id);
-                else
-                    g_liveCreatures.erase(id);
-            }
-            while (r->NextRow());
+            if (campMap)
+                DespawnCampCreature(campMap, cr.id);
+            else
+                g_liveCreatures.erase(cr.id);
         }
 
-        CharacterDatabase.DirectExecute(
-            "DELETE FROM mod_warband_camp_object WHERE account_id = {}", accountId);
-        CharacterDatabase.DirectExecute(
-            "DELETE FROM mod_warband_camp_creature WHERE account_id = {}", accountId);
-        CharacterDatabase.DirectExecute(
-            "DELETE FROM mod_warband_camp WHERE account_id = {}", accountId);
+        SQLTransaction trans = CharacterDatabase.BeginTransaction();
+        trans->Append("DELETE FROM mod_warband_camp_object WHERE account_id = {}", accountId);
+        trans->Append("DELETE FROM mod_warband_camp_creature WHERE account_id = {}", accountId);
+        trans->Append("DELETE FROM mod_warband_camp WHERE account_id = {}", accountId);
+        CharacterDatabase.CommitTransaction(trans);
 
         g_lastPlacedProp.erase(accountId);
 
@@ -2076,7 +2071,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         handler->SendSysMessage("Things you can put up at your camp:");
 
@@ -2106,10 +2101,10 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
-        Camp const* found = FindCamp(accountId);
+        Camp* found = FindCamp(accountId);
         if (!found)
         {
             handler->SendSysMessage("You have no camp yet. Stand somewhere you like and use |cffffff00.camp claim|r.");
@@ -2145,22 +2140,26 @@ public:
                 return true;
             }
 
-            if (QueryResult mr = CharacterDatabase.Query(
-                    "SELECT id FROM mod_warband_camp_object WHERE account_id = {} AND entry = 142103 LIMIT 1", accountId))
+            for (WarbandCamp::CampObjectRecord const& obj : found->objects)
             {
-                handler->SendSysMessage("You already have a mailbox in your camp. (Limit: 1)");
-                return true;
+                if (obj.entry == 142103)
+                {
+                    handler->SendSysMessage("You already have a mailbox in your camp. (Limit: 1)");
+                    return true;
+                }
             }
         }
 
         // NPC single-instance check per camp
         if (def->isCreature)
         {
-            if (QueryResult cr = CharacterDatabase.Query(
-                    "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} AND entry = {} LIMIT 1", accountId, def->entry))
+            for (WarbandCamp::CampCreatureRecord const& cr : found->creatures)
             {
-                handler->PSendSysMessage("You already have |cffffff00{}|r in your camp. (Limit: 1)", def->label);
-                return true;
+                if (cr.entry == def->entry)
+                {
+                    handler->PSendSysMessage("You already have |cffffff00{}|r in your camp. (Limit: 1)", def->label);
+                    return true;
+                }
             }
         }
 
@@ -2177,13 +2176,7 @@ public:
             return true;
         }
 
-        uint32 count = 0;
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT COUNT(*) FROM mod_warband_camp_object WHERE account_id = {}", accountId))
-            count = r->Fetch()[0].Get<uint32>();
-        if (QueryResult rc = CharacterDatabase.Query(
-                "SELECT COUNT(*) FROM mod_warband_camp_creature WHERE account_id = {}", accountId))
-            count += rc->Fetch()[0].Get<uint32>();
+        uint32 const count = static_cast<uint32>(found->objects.size() + found->creatures.size());
 
         uint32 const maxProps = g_maxProps.load();
         if (maxProps && count >= maxProps)
@@ -2268,6 +2261,20 @@ public:
             g_liveCreatures[id] = guid;
             g_lastPlacedProp[accountId] = { id, true };
             g_propCooldown[accountId] = now + CAMP_PROP_COOLDOWN_SECONDS;
+
+            WarbandCamp::CampCreatureRecord cr;
+            cr.id = id;
+            cr.accountId = accountId;
+            cr.entry = def->entry;
+            cr.map = campMap;
+            cr.x = x;
+            cr.y = y;
+            cr.z = z;
+            cr.orientation = o;
+            cr.phaseMask = 1u << campPhaseBit;
+            cr.liveGuid = guid;
+            found->creatures.push_back(cr);
+
             if (maxProps)
                 handler->PSendSysMessage("|cffffff00{}|r stationed ({} of {}).", def->label, count + 1, maxProps);
             else
@@ -2303,13 +2310,28 @@ public:
             return true;
         }
 
-        CharacterDatabase.DirectExecute(
+        CharacterDatabase.Execute(
             "UPDATE mod_warband_camp_object SET spawn_guid = {} WHERE id = {}", id, id);
 
         g_liveProps[id] = guid;
         g_guidToPropId[guid] = id;
         g_lastPlacedProp[accountId] = { id, false };
         g_propCooldown[accountId] = now + CAMP_PROP_COOLDOWN_SECONDS;
+
+        WarbandCamp::CampObjectRecord obj;
+        obj.id = id;
+        obj.accountId = accountId;
+        obj.spawnGuid = static_cast<uint32>(id);
+        obj.entry = def->entry;
+        obj.map = campMap;
+        obj.x = x;
+        obj.y = y;
+        obj.z = z;
+        obj.orientation = o;
+        obj.scale = 1.0f;
+        obj.phaseMask = 1u << campPhaseBit;
+        obj.liveGuid = guid;
+        found->objects.push_back(obj);
 
         GOMove::SendAdd(me, id);
 
@@ -2326,10 +2348,10 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
-        Camp const* found = FindCamp(accountId);
+        Camp* found = FindCamp(accountId);
         if (!found)
         {
             handler->SendSysMessage("You have no camp.");
@@ -2347,14 +2369,8 @@ public:
 
         if (!targetId)
         {
-            uint64 objId = 0;
-            uint64 crId = 0;
-            if (QueryResult r = CharacterDatabase.Query(
-                    "SELECT id FROM mod_warband_camp_object WHERE account_id = {} ORDER BY id DESC LIMIT 1", accountId))
-                objId = r->Fetch()[0].Get<uint64>();
-            if (QueryResult rc = CharacterDatabase.Query(
-                    "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} ORDER BY id DESC LIMIT 1", accountId))
-                crId = rc->Fetch()[0].Get<uint64>();
+            uint64 const objId = found->objects.empty() ? 0 : found->objects.back().id;
+            uint64 const crId = found->creatures.empty() ? 0 : found->creatures.back().id;
 
             if (crId > objId)
             {
@@ -2377,22 +2393,34 @@ public:
         uint32 entry = 0;
         if (isCreature)
         {
-            if (QueryResult r = CharacterDatabase.Query(
-                    "SELECT entry FROM mod_warband_camp_creature WHERE id = {}", targetId))
-                entry = r->Fetch()[0].Get<uint32>();
+            for (auto itCr = found->creatures.begin(); itCr != found->creatures.end(); ++itCr)
+            {
+                if (itCr->id == targetId)
+                {
+                    entry = itCr->entry;
+                    found->creatures.erase(itCr);
+                    break;
+                }
+            }
 
             DespawnCampCreature(me->GetMap(), targetId);
-            CharacterDatabase.DirectExecute(
+            CharacterDatabase.Execute(
                 "DELETE FROM mod_warband_camp_creature WHERE id = {}", targetId);
         }
         else
         {
-            if (QueryResult r = CharacterDatabase.Query(
-                    "SELECT entry FROM mod_warband_camp_object WHERE id = {}", targetId))
-                entry = r->Fetch()[0].Get<uint32>();
+            for (auto itObj = found->objects.begin(); itObj != found->objects.end(); ++itObj)
+            {
+                if (itObj->id == targetId)
+                {
+                    entry = itObj->entry;
+                    found->objects.erase(itObj);
+                    break;
+                }
+            }
 
             DespawnProp(me->GetMap(), targetId);
-            CharacterDatabase.DirectExecute(
+            CharacterDatabase.Execute(
                 "DELETE FROM mod_warband_camp_object WHERE id = {}", targetId);
             GOMove::SendRemove(me, targetId);
         }
@@ -2414,10 +2442,10 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
-        Camp const* found = FindCamp(accountId);
+        Camp* found = FindCamp(accountId);
         if (!found)
         {
             handler->SendSysMessage("You have no camp.");
@@ -2432,12 +2460,7 @@ public:
             return true;
         }
 
-        QueryResult ro = CharacterDatabase.Query(
-            "SELECT id, entry, pos_x, pos_y FROM mod_warband_camp_object WHERE account_id = {}", accountId);
-        QueryResult rc = CharacterDatabase.Query(
-            "SELECT id, entry, pos_x, pos_y FROM mod_warband_camp_creature WHERE account_id = {}", accountId);
-
-        if (!ro && !rc)
+        if (found->objects.empty() && found->creatures.empty())
         {
             handler->SendSysMessage("There is nothing set up here yet.");
             return true;
@@ -2447,41 +2470,34 @@ public:
         uint32 bestEntry = 0;
         bool bestIsCreature = false;
         float bestDist = 10.0f;
+        size_t bestIdx = 0;
 
-        if (ro)
+        for (size_t i = 0; i < found->objects.size(); ++i)
         {
-            do
+            auto const& obj = found->objects[i];
+            float const d = Dist2D(obj.x, obj.y, me->GetPositionX(), me->GetPositionY());
+            if (d < bestDist)
             {
-                Field* f = ro->Fetch();
-                float const d = Dist2D(f[2].Get<float>(), f[3].Get<float>(),
-                    me->GetPositionX(), me->GetPositionY());
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    bestId = f[0].Get<uint64>();
-                    bestEntry = f[1].Get<uint32>();
-                    bestIsCreature = false;
-                }
+                bestDist = d;
+                bestId = obj.id;
+                bestEntry = obj.entry;
+                bestIsCreature = false;
+                bestIdx = i;
             }
-            while (ro->NextRow());
         }
 
-        if (rc)
+        for (size_t i = 0; i < found->creatures.size(); ++i)
         {
-            do
+            auto const& cr = found->creatures[i];
+            float const d = Dist2D(cr.x, cr.y, me->GetPositionX(), me->GetPositionY());
+            if (d < bestDist)
             {
-                Field* f = rc->Fetch();
-                float const d = Dist2D(f[2].Get<float>(), f[3].Get<float>(),
-                    me->GetPositionX(), me->GetPositionY());
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    bestId = f[0].Get<uint64>();
-                    bestEntry = f[1].Get<uint32>();
-                    bestIsCreature = true;
-                }
+                bestDist = d;
+                bestId = cr.id;
+                bestEntry = cr.entry;
+                bestIsCreature = true;
+                bestIdx = i;
             }
-            while (rc->NextRow());
         }
 
         if (!bestId)
@@ -2493,13 +2509,15 @@ public:
         if (bestIsCreature)
         {
             DespawnCampCreature(me->GetMap(), bestId);
-            CharacterDatabase.DirectExecute(
+            found->creatures.erase(found->creatures.begin() + bestIdx);
+            CharacterDatabase.Execute(
                 "DELETE FROM mod_warband_camp_creature WHERE id = {}", bestId);
         }
         else
         {
             DespawnProp(me->GetMap(), bestId);
-            CharacterDatabase.DirectExecute(
+            found->objects.erase(found->objects.begin() + bestIdx);
+            CharacterDatabase.Execute(
                 "DELETE FROM mod_warband_camp_object WHERE id = {}", bestId);
             GOMove::SendRemove(me, bestId);
         }
@@ -2529,10 +2547,10 @@ public:
             return true;
         }
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
-        Camp const* found = FindCamp(accountId);
+        Camp* found = FindCamp(accountId);
         if (!found)
         {
             handler->SendSysMessage("You have no camp. Stand somewhere you like and use |cffffff00.camp claim|r.");
@@ -2553,17 +2571,18 @@ public:
 
         if (action == "remove")
         {
-            if (QueryResult r = CharacterDatabase.Query(
-                    "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} AND entry IN (31143, 31144, 31146)", accountId))
+            for (auto it = found->creatures.begin(); it != found->creatures.end();)
             {
-                do
+                if (it->entry == 31143 || it->entry == 31144 || it->entry == 31146)
                 {
-                    DespawnCampCreature(me->GetMap(), r->Fetch()[0].Get<uint64>());
+                    DespawnCampCreature(me->GetMap(), it->id);
+                    it = found->creatures.erase(it);
                 }
-                while (r->NextRow());
+                else
+                    ++it;
             }
 
-            CharacterDatabase.DirectExecute(
+            CharacterDatabase.Execute(
                 "DELETE FROM mod_warband_camp_creature WHERE account_id = {} AND entry IN (31143, 31144, 31146)", accountId);
             handler->SendSysMessage("Training Dummy packed away.");
             return true;
@@ -2583,16 +2602,17 @@ public:
         }
 
         // Despawn existing dummy if any
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT id FROM mod_warband_camp_creature WHERE account_id = {} AND entry IN (31143, 31144, 31146)", accountId))
+        for (auto it = found->creatures.begin(); it != found->creatures.end();)
         {
-            do
+            if (it->entry == 31143 || it->entry == 31144 || it->entry == 31146)
             {
-                DespawnCampCreature(me->GetMap(), r->Fetch()[0].Get<uint64>());
+                DespawnCampCreature(me->GetMap(), it->id);
+                it = found->creatures.erase(it);
             }
-            while (r->NextRow());
+            else
+                ++it;
         }
-        CharacterDatabase.DirectExecute(
+        CharacterDatabase.Execute(
             "DELETE FROM mod_warband_camp_creature WHERE account_id = {} AND entry IN (31143, 31144, 31146)", accountId);
 
         float const x = me->GetPositionX() + std::cos(me->GetOrientation()) * 3.0f;
@@ -2613,7 +2633,21 @@ public:
 
         ObjectGuid const guid = SpawnCampCreature(me->GetMap(), entry, x, y, z, o, 1u << camp.phaseBit);
         if (guid && id)
+        {
             g_liveCreatures[id] = guid;
+            WarbandCamp::CampCreatureRecord cr;
+            cr.id = id;
+            cr.accountId = accountId;
+            cr.entry = entry;
+            cr.map = camp.map;
+            cr.x = x;
+            cr.y = y;
+            cr.z = z;
+            cr.orientation = o;
+            cr.phaseMask = 1u << camp.phaseBit;
+            cr.liveGuid = guid;
+            found->creatures.push_back(cr);
+        }
 
         handler->PSendSysMessage("|cffffff00{}|r stationed.", label);
         return true;
@@ -2625,7 +2659,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
         Camp* found = FindCamp(accountId);
@@ -2659,9 +2693,11 @@ public:
             text = text.substr(0, 120);
 
         found->greeting = text;
+        std::string escapedText = text;
+        CharacterDatabase.EscapeString(escapedText);
         CharacterDatabase.Execute(
             "UPDATE mod_warband_camp SET greeting = '{}' WHERE account_id = {}",
-            text, accountId);
+            escapedText, accountId);
 
         handler->PSendSysMessage("Greeting set to: \"|cff00ff00{}|r\"", text);
         return true;
@@ -2673,7 +2709,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
         Camp* found = FindCamp(accountId);
@@ -2739,7 +2775,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         if (!who || who->empty())
         {
@@ -2827,7 +2863,7 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         if (g_camps.empty())
         {
@@ -2883,10 +2919,10 @@ public:
         if (!Gate(handler, me))
             return true;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
-        Camp const* found = FindCamp(accountId);
+        Camp* found = FindCamp(accountId);
         if (!found)
         {
             handler->SendSysMessage("Claim a camp first, somewhere flat and open.");
@@ -2903,15 +2939,10 @@ public:
 
         Map* map = me->GetMap();
 
-        if (QueryResult r = CharacterDatabase.Query(
-                "SELECT id FROM mod_warband_camp_object WHERE account_id = {}", accountId))
-        {
-            do
-            {
-                DespawnProp(map, r->Fetch()[0].Get<uint64>());
-            }
-            while (r->NextRow());
-        }
+        for (WarbandCamp::CampObjectRecord const& obj : found->objects)
+            DespawnProp(map, obj.id);
+        found->objects.clear();
+
         CharacterDatabase.DirectExecute(
             "DELETE FROM mod_warband_camp_object WHERE account_id = {}", accountId);
 
@@ -2970,6 +3001,23 @@ public:
             if (guid && id)
             {
                 g_liveProps[id] = guid;
+                g_guidToPropId[guid] = id;
+
+                WarbandCamp::CampObjectRecord obj;
+                obj.id = id;
+                obj.accountId = accountId;
+                obj.spawnGuid = static_cast<uint32>(id);
+                obj.entry = g_props[i].entry;
+                obj.map = camp.map;
+                obj.x = x;
+                obj.y = y;
+                obj.z = z;
+                obj.orientation = 0.0f;
+                obj.scale = 1.0f;
+                obj.phaseMask = 1u << camp.phaseBit;
+                obj.liveGuid = guid;
+                found->objects.push_back(obj);
+
                 ++placed;
             }
             else
@@ -3016,7 +3064,7 @@ public:
         handler->SendSysMessage("The warband alts feature requires mod-playerbots to be installed.");
         return true;
 #else
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         uint32 const accountId = me->GetSession()->GetAccountId();
         Camp const* found = FindCamp(accountId);
@@ -3056,7 +3104,8 @@ public:
         g_enableRestedXP = sConfigMgr->GetOption<bool>("WarbandCamp.EnableRestedXP", true);
         g_enableMailbox = sConfigMgr->GetOption<bool>("WarbandCamp.EnableMailbox", true);
         g_enableTrainingDummy = sConfigMgr->GetOption<bool>("WarbandCamp.EnableTrainingDummy", true);
-        g_enableGOMoveBuilding = sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding", true);
+        g_enableGOMoveBuilding = sConfigMgr->GetOption<bool>("WarbandCamp.EnableBuilding",
+            sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding", true));
         g_inactivityDays = sConfigMgr->GetOption<uint32>("WarbandCamp.InactivityDays", 90);
 
         float view = sConfigMgr->GetOption<float>("WarbandCamp.ViewDistance", 40.0f);
@@ -3106,7 +3155,7 @@ public:
             target->IsOutdoors() ? "yes" : "no", groundZ, z - groundZ,
             target->IsInWater() ? "yes" : "no", target->GetPhaseMask());
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         char const* blocked = CampSiteBlocker(target);
         handler->PSendSysMessage("claim here: {}", blocked ? blocked : "ALLOWED");
@@ -3185,8 +3234,20 @@ public:
     WarbandCampPlayer()
         : PlayerScript("WarbandCampPlayer",
             { PLAYERHOOK_ON_UPDATE, PLAYERHOOK_ON_LOGOUT,
-              PLAYERHOOK_ON_MAP_CHANGED, PLAYERHOOK_ON_LOGIN })
+              PLAYERHOOK_ON_MAP_CHANGED, PLAYERHOOK_ON_LOGIN,
+              PLAYERHOOK_ON_DELETE, PLAYERHOOK_ON_DELETE_FROM_DB })
     {
+    }
+
+    void OnPlayerDelete(ObjectGuid guid, uint32 /*accountId*/) override
+    {
+        CharacterDatabase.Execute(
+            "DELETE FROM mod_warband_alt_origin WHERE guid = {}", guid.GetCounter());
+    }
+
+    void OnPlayerDeleteFromDB(CharacterDatabaseTransaction trans, uint32 guid) override
+    {
+        trans->Append("DELETE FROM mod_warband_alt_origin WHERE guid = {}", guid);
     }
 
     void OnPlayerUpdate(Player* player, uint32 diff) override
@@ -3194,7 +3255,7 @@ public:
         if (!g_enabled.load() || !IsWarbandRealPlayer(player))
             return;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
 
         PlayerCampState& st = g_playerState[player->GetGUID()];
         if (st.timer > diff)
@@ -3212,7 +3273,7 @@ public:
         if (!IsWarbandRealPlayer(player))
             return;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         auto const it = g_playerState.find(player->GetGUID());
         if (it != g_playerState.end())
             ClearCampPhase(player, it->second);
@@ -3220,7 +3281,7 @@ public:
 
     void OnPlayerLogout(Player* player) override
     {
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         g_playerState.erase(player->GetGUID());
         g_parkedAlts.erase(player->GetGUID().GetCounter());
     }
@@ -3234,7 +3295,7 @@ public:
 
         // Update camp activity timestamp
         {
-            std::lock_guard<std::mutex> lock(g_campMutex);
+            std::lock_guard<std::recursive_mutex> lock(g_campMutex);
             g_playerState[player->GetGUID()].timer = CAMP_LOGIN_PHASE_DELAY_MS;
             if (Camp* c = FindCamp(accountId))
             {
@@ -3252,7 +3313,7 @@ public:
         {
             bool restore = false;
             {
-                std::lock_guard<std::mutex> lock(g_campMutex);
+                std::lock_guard<std::recursive_mutex> lock(g_campMutex);
                 g_parkedAlts.erase(lowGuid);
                 if (Camp const* c = FindCamp(accountId))
                     restore = c->map == player->GetMapId() &&
@@ -3286,7 +3347,7 @@ public:
         if (!g_autoAlts.load())
             return;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         if (!FindCamp(accountId))
             return;
 
@@ -3336,7 +3397,8 @@ public:
         g_enableRestedXP = sConfigMgr->GetOption<bool>("WarbandCamp.EnableRestedXP", true);
         g_enableMailbox = sConfigMgr->GetOption<bool>("WarbandCamp.EnableMailbox", true);
         g_enableTrainingDummy = sConfigMgr->GetOption<bool>("WarbandCamp.EnableTrainingDummy", true);
-        g_enableGOMoveBuilding = sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding", true);
+        g_enableGOMoveBuilding = sConfigMgr->GetOption<bool>("WarbandCamp.EnableBuilding",
+            sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding", true));
         g_inactivityDays = sConfigMgr->GetOption<uint32>("WarbandCamp.InactivityDays", 90);
 
         ParseCommaDelimitedSet(sConfigMgr->GetOption<std::string>("WarbandCamp.BlacklistedMaps", ""), g_blacklistedMaps);
@@ -3354,7 +3416,7 @@ public:
         if (!g_enabled.load())
             return;
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         if (g_altGathers.empty())
             return;
 
@@ -3493,11 +3555,12 @@ public:
             "orientation FLOAT NOT NULL, "
             "spawned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
             "PRIMARY KEY (id), "
-            "KEY idx_account (account_id)"
+            "KEY idx_account (account_id), "
+            "KEY idx_account_entry (account_id, entry)"
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 "
             "COLLATE=utf8mb4_unicode_ci");
 
-        // Self-healing column additions for existing tables
+        // Self-healing column and index additions for existing tables
         if (!CharacterDatabase.Query("SHOW COLUMNS FROM mod_warband_camp LIKE 'privacy'"))
             CharacterDatabase.DirectExecute("ALTER TABLE mod_warband_camp ADD COLUMN privacy TINYINT UNSIGNED NOT NULL DEFAULT 0");
 
@@ -3512,6 +3575,9 @@ public:
 
         if (!CharacterDatabase.Query("SHOW COLUMNS FROM mod_warband_camp_object LIKE 'scale'"))
             CharacterDatabase.DirectExecute("ALTER TABLE mod_warband_camp_object ADD COLUMN scale FLOAT NOT NULL DEFAULT 1");
+
+        if (!CharacterDatabase.Query("SHOW INDEX FROM mod_warband_camp_creature WHERE Key_name = 'idx_account_entry'"))
+            CharacterDatabase.DirectExecute("ALTER TABLE mod_warband_camp_creature ADD KEY idx_account_entry (account_id, entry)");
 
         // Backward compatibility migration from legacy wowlegends tables if present:
         if (CharacterDatabase.Query("SHOW TABLES LIKE 'wowlegends_warband_camp'"))
@@ -3551,18 +3617,18 @@ public:
             if (expired)
             {
                 uint32 pruned = 0;
+                SQLTransaction trans = CharacterDatabase.BeginTransaction();
                 do
                 {
                     uint32 const expAcc = expired->Fetch()[0].Get<uint32>();
-                    CharacterDatabase.DirectExecute(
-                        "DELETE FROM mod_warband_camp_object WHERE account_id = {}", expAcc);
-                    CharacterDatabase.DirectExecute(
-                        "DELETE FROM mod_warband_camp_creature WHERE account_id = {}", expAcc);
-                    CharacterDatabase.DirectExecute(
-                        "DELETE FROM mod_warband_camp WHERE account_id = {}", expAcc);
+                    trans->Append("DELETE FROM mod_warband_camp_object WHERE account_id = {}", expAcc);
+                    trans->Append("DELETE FROM mod_warband_camp_creature WHERE account_id = {}", expAcc);
+                    trans->Append("DELETE FROM mod_warband_camp WHERE account_id = {}", expAcc);
                     ++pruned;
                 }
                 while (expired->NextRow());
+
+                CharacterDatabase.CommitTransaction(trans);
 
                 if (pruned)
                     LOG_INFO("server", "[warbandcamp] Pruned {} abandoned camps inactive for >{} days", pruned, inactDays);
@@ -3571,7 +3637,7 @@ public:
 
         BuildPropCatalogue();
 
-        std::lock_guard<std::mutex> lock(g_campMutex);
+        std::lock_guard<std::recursive_mutex> lock(g_campMutex);
         g_camps.clear();
         if (QueryResult r = CharacterDatabase.Query(
                 "SELECT account_id, map, pos_x, pos_y, pos_z, orientation, phase_bit, zone_id, privacy, greeting, last_active "
@@ -3597,7 +3663,66 @@ public:
             while (r->NextRow());
         }
 
-        LOG_INFO("server", "[warbandcamp] {} camps loaded", g_camps.size());
+        // Bulk load all camp objects into memory
+        uint32 objCount = 0;
+        if (QueryResult ro = CharacterDatabase.Query(
+                "SELECT id, account_id, spawn_guid, entry, pos_x, pos_y, pos_z, orientation, scale "
+                "FROM mod_warband_camp_object ORDER BY account_id, id"))
+        {
+            do
+            {
+                Field* f = ro->Fetch();
+                uint32 const acc = f[1].Get<uint32>();
+                if (Camp* c = FindCamp(acc))
+                {
+                    WarbandCamp::CampObjectRecord obj;
+                    obj.id = f[0].Get<uint64>();
+                    obj.accountId = acc;
+                    obj.spawnGuid = f[2].Get<uint32>();
+                    obj.entry = f[3].Get<uint32>();
+                    obj.map = c->map;
+                    obj.x = f[4].Get<float>();
+                    obj.y = f[5].Get<float>();
+                    obj.z = f[6].Get<float>();
+                    obj.orientation = f[7].Get<float>();
+                    obj.scale = f[8].IsNull() ? 1.0f : f[8].Get<float>();
+                    obj.phaseMask = 1u << c->phaseBit;
+                    c->objects.push_back(obj);
+                    ++objCount;
+                }
+            } while (ro->NextRow());
+        }
+
+        // Bulk load all camp creatures into memory
+        uint32 crCount = 0;
+        if (QueryResult rc = CharacterDatabase.Query(
+                "SELECT id, account_id, entry, pos_x, pos_y, pos_z, orientation "
+                "FROM mod_warband_camp_creature ORDER BY account_id, id"))
+        {
+            do
+            {
+                Field* f = rc->Fetch();
+                uint32 const acc = f[1].Get<uint32>();
+                if (Camp* c = FindCamp(acc))
+                {
+                    WarbandCamp::CampCreatureRecord cr;
+                    cr.id = f[0].Get<uint64>();
+                    cr.accountId = acc;
+                    cr.entry = f[2].Get<uint32>();
+                    cr.map = c->map;
+                    cr.x = f[3].Get<float>();
+                    cr.y = f[4].Get<float>();
+                    cr.z = f[5].Get<float>();
+                    cr.orientation = f[6].Get<float>();
+                    cr.phaseMask = 1u << c->phaseBit;
+                    c->creatures.push_back(cr);
+                    ++crCount;
+                }
+            } while (rc->NextRow());
+        }
+
+        LOG_INFO("server", "[warbandcamp] {} camps loaded ({} objects, {} creatures cached in memory)",
+            g_camps.size(), objCount, crCount);
     }
 
 private:

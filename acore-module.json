@@ -1,5 +1,5 @@
 {
-  "name": "mod-warband-camp-gomove",
+  "name": "mod-warband-camp",
   "version": "1.0.0",
   "compatibility" : [
       { "version": "^3.0.0", "branch": "master" }
