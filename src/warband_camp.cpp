@@ -579,7 +579,7 @@ PropDef const g_propCatalogue[] =
 
     bool IsWarbandRealPlayer(Player* p)
     {
-        return p && p->GetSession() && !p->GetSession()->IsBot();
+        return p && p->GetSession() && !p->GetSession()->IsHeadless();
     }
 
     Camp* FindCamp(uint32 accountId)
@@ -3483,7 +3483,7 @@ public:
                     continue;
                 }
 
-                if (!alt->GetSession() || !alt->GetSession()->IsBot())
+                if (!alt->GetSession() || !alt->GetSession()->IsHeadless())
                 {
                     nameIt = g.names.erase(nameIt);
                     continue;
