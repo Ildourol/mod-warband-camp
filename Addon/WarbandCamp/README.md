@@ -9,7 +9,7 @@ A dedicated in-game player housing, camp management, and 3D construction toolkit
   - Directional compass keypad (North, South, East, West) with customizable step distance.
   - Elevation adjustment (Up, Down).
   - Fine rotation and per-object scaling.
-  - Ground-target placement mode using the picnic blanket placement spell (Spell ID: 27651).
+  - Ground-target placement mode using the camp placement spell 'Place Camp Object' (Spell ID: 27651).
   - Pop-out floating movement HUD and floating object selection list.
 - **Interactive 3D Camp Object Browser**: Full search engine (`.gomovesearch`) with 3D model preview and instant placement into your camp.
 - **Favorites & Command History**: Pin frequently used camp actions and track real-time command execution history with instant re-run shortcuts.

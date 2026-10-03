@@ -295,8 +295,15 @@ local function gomoveBuilder(parent)
         end
     end)
 
-    local spellSpawnBtn = WBC.MakeFlatButton(colLeft, 110, 22, "Target Spell", { justify = "CENTER" })
+    local spellSpawnBtn = WBC.MakeFlatButton(colLeft, 110, 22, "Place Object", { justify = "CENTER" })
     spellSpawnBtn:SetPoint("LEFT", spawnBtn, "RIGHT", 6, 0)
+    spellSpawnBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Place Camp Object", 1, 0.82, 0)
+        GameTooltip:AddLine("Activates ground-targeting reticle (Spell ID: 27651) to position the selected GameObject.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    spellSpawnBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     spellSpawnBtn:SetScript("OnClick", function()
         local ent = tonumber(spawnBox:GetText())
         if ent and ent > 0 then
@@ -504,12 +511,33 @@ local function gomoveBuilder(parent)
         contentFav:SetHeight(-y + 8)
     end
 
+    -- ─── Disabled Banner ───────────────────────────────────────────────────
+    local disBanner = CreateFrame("Frame", nil, parent)
+    disBanner:SetPoint("TOPLEFT", parent, "TOPLEFT", 6, -6)
+    disBanner:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -6, -6)
+    disBanner:SetHeight(32)
+    WBC.ApplyBackdrop(disBanner, "inset", 0.92, 0.25, 0.05, 0.05)
+    disBanner:SetFrameLevel(parent:GetFrameLevel() + 10)
+    disBanner:Hide()
+
+    local disText = disBanner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    disText:SetPoint("CENTER", disBanner, "CENTER", 0, 0)
+    disText:SetText("|cffff5555GOMove 3D Builder is disabled on this realm.|r Use the |cffffff00Camp|r tab to place and manage props.")
+
     local function refreshAll()
+        if WBC.Warband and WBC.Warband.gomoveDisabled then
+            disBanner:Show()
+        else
+            disBanner:Hide()
+        end
         refreshSelection()
         refreshFavorites()
     end
 
     table.insert(GOMove.Frames, { Update = refreshAll })
+    if WBC.Warband and WBC.Warband.OnChange then
+        WBC.Warband.OnChange(refreshAll)
+    end
     parent:HookScript("OnShow", refreshAll)
     refreshAll()
 end

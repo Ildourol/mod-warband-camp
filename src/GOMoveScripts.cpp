@@ -41,13 +41,20 @@ static GOMoveMode GetGOMoveMode(ChatHandler* handler, Player* player, bool sendE
     if (!player || !player->GetSession())
         return GOMoveMode::None;
 
+    if (!WarbandCamp::IsGOMoveEnabled())
+    {
+        if (sendErrors)
+            handler->SendErrorMessage("GOMove 3D building tools are disabled on this realm.");
+        return GOMoveMode::None;
+    }
+
     if (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER)
         return GOMoveMode::Admin;
 
-    if (!WarbandCamp::IsCampEnabled() || !WarbandCamp::IsGOMoveBuildingEnabled())
+    if (!WarbandCamp::IsCampEnabled())
     {
         if (sendErrors)
-            handler->SendErrorMessage("Camp building tools are disabled on this realm.");
+            handler->SendErrorMessage("Warband Camps are disabled on this realm.");
         return GOMoveMode::None;
     }
 
@@ -160,9 +167,12 @@ public:
 
         bool const isGM = (mode == GOMoveMode::Admin);
 
-        // Ensure placement spell is learned
-        if (!player->HasSpell(GOMOVE_SPELL_PLACE))
-            player->learnSpell(GOMOVE_SPELL_PLACE, false);
+        // Ensure placement spell is learned if autolearn is enabled
+        if (WarbandCamp::IsAutoLearnPlacementSpellEnabled())
+        {
+            if (!player->HasSpell(GOMOVE_SPELL_PLACE))
+                player->learnSpell(GOMOVE_SPELL_PLACE, false);
+        }
 
         // Check if target object is a camp object
         WarbandCamp::CampObjectRecord campRecord;
@@ -461,7 +471,17 @@ public:
                             }
                         }
                         if (!player->HasSpell(GOMOVE_SPELL_PLACE))
-                            player->learnSpell(GOMOVE_SPELL_PLACE, false);
+                        {
+                            if (WarbandCamp::IsAutoLearnPlacementSpellEnabled())
+                            {
+                                player->learnSpell(GOMOVE_SPELL_PLACE, false);
+                            }
+                            else
+                            {
+                                handler->SendErrorMessage("You do not know the placement spell 'Place Camp Object'. Learn it using '.learn 27651'.");
+                                return true;
+                            }
+                        }
                         GOMove::Store.SpawnQueAdd(player->GetGUID(), ARG);
                     } break;
                     case SELECTALLNEAR:
@@ -495,7 +515,7 @@ public:
 
 // ---------------------------------------------------------------------------
 // Spell script — placed on a ground-target spell (ScriptName: "spell_gomove_place")
-// Assign to spell 27651 or 897 via spell_script_names table.
+// Place Camp Object spell (Spell ID: 27651) via spell_script_names table.
 // ---------------------------------------------------------------------------
 
 class spell_gomove_place : public SpellScript
@@ -509,6 +529,12 @@ class spell_gomove_place : public SpellScript
         Player* player = GetCaster()->ToPlayer();
         if (!player)
             return;
+
+        if (!WarbandCamp::IsGOMoveEnabled())
+        {
+            ChatHandler(player->GetSession()).SendErrorMessage("Camp building and ground placement tools are disabled on this realm.");
+            return;
+        }
 
         WorldLocation const* summonPos = GetExplTargetDest();
         if (!summonPos)
@@ -557,6 +583,9 @@ public:
 
     void OnGameObjectAddWorld(GameObject* go) override
     {
+        if (!WarbandCamp::IsGOMoveEnabled())
+            return;
+
         ObjectGuid::LowType const spawnId = go->GetSpawnId();
         if (!spawnId)
             return;
@@ -592,12 +621,13 @@ public:
         bool const isGM = (player->GetSession()->GetSecurity() >= SEC_GAMEMASTER);
         bool const hasCamp = WarbandCamp::HasCamp(player->GetSession()->GetAccountId());
 
-        if (isGM || (hasCamp && WarbandCamp::IsGOMoveBuildingEnabled()))
+        if (WarbandCamp::IsGOMoveEnabled() && WarbandCamp::IsAutoLearnPlacementSpellEnabled() &&
+            (isGM || (hasCamp && WarbandCamp::IsCampEnabled())))
         {
             if (!player->HasSpell(GOMOVE_SPELL_PLACE))
             {
                 player->learnSpell(GOMOVE_SPELL_PLACE, false);
-                ChatHandler(player->GetSession()).PSendSysMessage("|cff00ff00[Warband Camp]|r Ground placement spell (ID: {}) learned.", GOMOVE_SPELL_PLACE);
+                ChatHandler(player->GetSession()).PSendSysMessage("|cff00ff00[Warband Camp]|r Camp placement spell 'Place Camp Object' (ID: {}) learned.", GOMOVE_SPELL_PLACE);
             }
         }
     }

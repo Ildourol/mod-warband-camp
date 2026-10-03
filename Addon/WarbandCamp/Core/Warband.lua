@@ -12,6 +12,7 @@ local W = {
     privacy = nil,
     count   = nil,     -- props placed
     cap     = nil,     -- prop cap; nil = unlimited (MaxProps=0) or unknown
+    gomoveDisabled = false,
 }
 WBC.Warband = W
 
@@ -35,6 +36,12 @@ end
 function W.ParseSystem(msg)
     if type(msg) ~= "string" then return false end
     msg = strip(msg)
+
+    if msg:find("GOMove.*disabled", 1) or msg:find("building tools are disabled", 1, true) then
+        W.gomoveDisabled = true
+        notify()
+        return true
+    end
 
     if msg:find("Warband Camps are not enabled", 1, true) then
         W.probed, W.enabled = true, false

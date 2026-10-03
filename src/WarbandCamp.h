@@ -49,8 +49,10 @@ namespace WarbandCamp
 
     // Configuration gates
     bool IsCampEnabled();
-    bool IsBuildingEnabled();
-    bool IsGOMoveBuildingEnabled();
+    bool IsGOMoveEnabled();
+    inline bool IsBuildingEnabled() { return IsGOMoveEnabled(); }
+    inline bool IsGOMoveBuildingEnabled() { return IsGOMoveEnabled(); }
+    bool IsAutoLearnPlacementSpellEnabled();
     uint32 GetMaxProps();
 
     // Camp state queries

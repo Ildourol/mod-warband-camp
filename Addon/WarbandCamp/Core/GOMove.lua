@@ -519,7 +519,7 @@ function SELECTIONS:OnClick()
 end
 
 local SPELLENTRY = GOMove:CreateInput(MainFrame, "SPELLENTRY", 65, 25, -30, -415, 10)
-local SPELLSPAWN = GOMove:CreateButton(MainFrame, "Send", 50, 25, 40, -415)
+local SPELLSPAWN = GOMove:CreateButton(MainFrame, "Place", 50, 25, 40, -415)
 function SPELLSPAWN:OnClick()
     GOMove:Move("SPAWNSPELL", SPELLENTRY:GetNumber())
     CastSpellByID(27651)
@@ -644,3 +644,123 @@ EventFrame:SetScript("OnEvent", function(self, event, MSG, MSG2, Type, Sender)
         GOMove:Update()
     end
 end)
+
+-- ─── Camp Placement Spell Overrides (Spell ID: 27651) ───────────────────────
+-- Dynamically presents Spell 27651 ("Romantic Picnic" in 3.3.5a DBC) as
+-- "Place Camp Object" across the game client (Spellbook, Action Bars, Tooltips).
+local PLACE_SPELL_ID   = 27651
+local PLACE_SPELL_NAME = "Place Camp Object"
+local PLACE_SPELL_DESC = "Target a location on the ground to place your selected Warband Camp object."
+local PLACE_SPELL_ICON = "Interface\\Icons\\INV_Hammer_20"
+
+if GetSpellInfo then
+    local _origGetSpellInfo = GetSpellInfo
+    function GetSpellInfo(spell, ...)
+        if spell == PLACE_SPELL_ID or spell == PLACE_SPELL_NAME or spell == "Romantic Picnic" or spell == "Picnic Blanket Ritual Effect" then
+            local _, rank, origIcon, cost, isFunnel, powerType, castTime, minRange, maxRange = _origGetSpellInfo(PLACE_SPELL_ID, ...)
+            return PLACE_SPELL_NAME, rank or "", PLACE_SPELL_ICON, cost or 0, isFunnel, powerType, castTime or 0, minRange or 0, maxRange or 0
+        end
+        return _origGetSpellInfo(spell, ...)
+    end
+end
+
+if GetSpellLink then
+    local _origGetSpellLink = GetSpellLink
+    function GetSpellLink(spell, ...)
+        if spell == PLACE_SPELL_ID or spell == PLACE_SPELL_NAME or spell == "Romantic Picnic" or spell == "Picnic Blanket Ritual Effect" then
+            return "|cff71d5ff|Hspell:27651|h[" .. PLACE_SPELL_NAME .. "]|h|r"
+        end
+        return _origGetSpellLink(spell, ...)
+    end
+end
+
+if GetSpellBookItemInfo then
+    if GetSpellName then
+        local _origGetSpellName = GetSpellName
+        function GetSpellName(index, bookType)
+            local spellType, id = GetSpellBookItemInfo(index, bookType or "player")
+            if id == PLACE_SPELL_ID then
+                local _, rank = _origGetSpellName(index, bookType)
+                return PLACE_SPELL_NAME, rank
+            end
+            local name, rank = _origGetSpellName(index, bookType)
+            if name and (name == "Romantic Picnic" or name == "Picnic Blanket Ritual Effect" or name == PLACE_SPELL_NAME) then
+                return PLACE_SPELL_NAME, rank
+            end
+            return name, rank
+        end
+    end
+
+    if GetSpellBookItemName then
+        local _origGetSpellBookItemName = GetSpellBookItemName
+        function GetSpellBookItemName(index, bookType)
+            local spellType, id = GetSpellBookItemInfo(index, bookType or "player")
+            if id == PLACE_SPELL_ID then
+                local _, rank = _origGetSpellBookItemName(index, bookType)
+                return PLACE_SPELL_NAME, rank
+            end
+            local name, rank = _origGetSpellBookItemName(index, bookType)
+            if name and (name == "Romantic Picnic" or name == "Picnic Blanket Ritual Effect" or name == PLACE_SPELL_NAME) then
+                return PLACE_SPELL_NAME, rank
+            end
+            return name, rank
+        end
+    end
+
+    if GetSpellTexture then
+        local _origGetSpellTexture = GetSpellTexture
+        function GetSpellTexture(index, bookType)
+            local spellType, id = GetSpellBookItemInfo(index, bookType or "player")
+            if id == PLACE_SPELL_ID then
+                return PLACE_SPELL_ICON
+            end
+            if GetSpellName then
+                local name = GetSpellName(index, bookType)
+                if name == PLACE_SPELL_NAME or name == "Romantic Picnic" or name == "Picnic Blanket Ritual Effect" then
+                    return PLACE_SPELL_ICON
+                end
+            end
+            return _origGetSpellTexture(index, bookType)
+        end
+    end
+end
+
+local function HookSpellTooltip(tt)
+    if not tt then return end
+    tt:HookScript("OnTooltipSetSpell", function(self)
+        local name, id = self:GetSpell()
+        if id == PLACE_SPELL_ID or name == PLACE_SPELL_NAME or name == "Romantic Picnic" or name == "Picnic Blanket Ritual Effect" then
+            local header = _G[self:GetName() .. "TextLeft1"]
+            if header then
+                header:SetText(PLACE_SPELL_NAME)
+            end
+            local num = self:NumLines()
+            local found = false
+            for i = 2, num do
+                local line = _G[self:GetName() .. "TextLeft" .. i]
+                if line then
+                    local text = line:GetText()
+                    if text and (text:find("picnic", 1, true) or text:find("Picnic", 1, true) or text:find("blanket", 1, true)) then
+                        line:SetText(PLACE_SPELL_DESC)
+                        found = true
+                        break
+                    end
+                end
+            end
+            if not found then
+                self:AddLine(PLACE_SPELL_DESC, 1, 0.82, 0, true)
+            end
+            self:Show()
+        end
+    end)
+end
+
+HookSpellTooltip(GameTooltip)
+HookSpellTooltip(ItemRefTooltip)
+
+SLASH_WARBANDPLACE1 = "/campplace"
+SLASH_WARBANDPLACE2 = "/placeobject"
+SlashCmdList["WARBANDPLACE"] = function()
+    CastSpellByID(PLACE_SPELL_ID)
+end
+

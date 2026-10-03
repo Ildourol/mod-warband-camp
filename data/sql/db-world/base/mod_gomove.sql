@@ -16,5 +16,5 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('gomovesearch', 0, 'Syntax: .gomovesearch <name|entry> — GOMove browser search. Queries gameobject_template and returns results.')
 ON DUPLICATE KEY UPDATE `security` = 0;
 
--- Placement spell binding (spell 27651 = ground-target placement)
+-- Placement spell binding (spell 27651 = Place Camp Object ground-target placement)
 INSERT IGNORE INTO spell_script_names (spell_id, ScriptName) VALUES (27651, 'spell_gomove_place');

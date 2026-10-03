@@ -1,7 +1,8 @@
 -- ============================================================================
 -- GOMove — Character spell setup
--- Automatically grant ground-placement spell 27651 to GM characters (gmlevel >= 2)
--- Note: The C++ module also automatically learns this spell on login.
+-- Automatically grant ground-placement spell 27651 ("Place Camp Object") to GM characters (gmlevel >= 2)
+-- Note: The C++ module also automatically learns this spell on login (configurable via WarbandCamp.AutoLearnPlacementSpell).
+-- Manual learn command: .learn 27651
 -- ============================================================================
 
 INSERT IGNORE INTO `character_spell` (`guid`, `spell`, `specMask`)

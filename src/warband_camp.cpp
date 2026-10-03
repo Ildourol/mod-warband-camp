@@ -62,7 +62,8 @@ using namespace Acore::ChatCommands;
 namespace
 {
     std::atomic<bool> g_enabled{true};
-    std::atomic<bool> g_enableGOMoveBuilding{true};
+    std::atomic<bool> g_enableGOMove{true};
+    std::atomic<bool> g_autoLearnPlacementSpell{true};
 
     // ---------------------------------------------------------------------
     // Tunables
@@ -128,7 +129,6 @@ PropDef const g_propCatalogue[] =
         { "tent-excavation", 210286, "Excavation Canopy Tent", 8.0f },
         { "tent-souvenir", 180032, "Festival Fair Tent", 6.5f },
         { "tent-fortune", 180030, "Fortune Teller Tent", 7.0f },
-        { "tent-argent-outpost", 211022, "Argent Outpost Tent", 7.5f },
         { "tent-durotar-large", 193219, "Durotar Large Tent", 8.0f },
         { "tent-goblin-dome", 188180, "Goblin Domed Tent", 6.5f },
         // fire & light
@@ -241,7 +241,6 @@ PropDef const g_propCatalogue[] =
         { "wall-palisade-orc", 19423, "Orc Palisade Wall", 5.0f },
         { "wall-spike-defensive", 191615, "Spiked Defensive Palisade", 5.0f },
         { "spike-heavy", 193415, "Heavy Defensive Ground Spike", 3.0f },
-        { "gate-pvp", 180322, "Fortified Iron Gate", 5.0f },
         { "cannon-base", 183158, "Heavy Siege Mount", 4.0f },
         // banners
         { "banner", 180773, "Banner", 2.5f },
@@ -366,7 +365,6 @@ PropDef const g_propCatalogue[] =
         { "plant-gloomweed", 180227, "Tirisfal Gloomweed", 2.0f },
         // professions
         { "alchemy", 187114, "Alchemy Table", 3.0f },
-        { "fishing-post", 187376, "Master Angler Fishing Post", 2.5f },
         { "alchemy-undead", 176561, "Forsaken Alchemy Bench", 3.0f },
         { "alchemy-round", 190689, "Apothecary Chemistry Set", 2.5f },
         { "cauldron-boiling", 188468, "Bubbling Cauldron", 2.5f },
@@ -379,7 +377,6 @@ PropDef const g_propCatalogue[] =
         { "table-apprentice-alchemy", 192547, "Apprentice Alchemy Station", 3.0f },
         { "machinery-gnome", 187903, "Gnomish Field Machinery", 3.0f },
         // buildings
-        { "cottage", 183493, "Cottage", 14.0f },
         { "beertent", 186682, "Beer Tent", 10.0f },
         { "pavilion", 188021, "Pavilion", 10.0f },
         { "bigtent", 184593, "Large Tent", 8.0f },
@@ -391,12 +388,6 @@ PropDef const g_propCatalogue[] =
         { "hut-murloc", 186742, "Tribal Thatched Hut", 7.0f },
         { "hut-stilt", 186743, "Stilt Water Hut", 8.0f },
         { "booth", 180042, "Carnival Booth", 6.0f },
-        { "building-moonwell", 20818, "Night Elf Moon Well", 12.0f },
-        { "building-holding-pen", 20817, "Bamboo Holding Pen", 8.0f },
-        { "building-landing-pad", 20822, "Aviation Landing Pad", 10.0f },
-        { "building-mine", 20811, "Underground Mine Cavern", 14.0f },
-        { "tower-guard", 20816, "Alliance Guard Tower", 10.0f },
-        { "tower-orc", 20812, "Horde Watch Tower", 10.0f },
         { "pavilion-menagerie", 180039, "Menagerie Shelter Pavilion", 7.0f },
         { "booth-ticket", 180034, "Carnival Ticket Gazebo", 6.0f },
         { "arch-festival", 181086, "Grand Festival Arch", 5.0f },
@@ -406,9 +397,7 @@ PropDef const g_propCatalogue[] =
         { "portal-org", 193427, "Orgrimmar Portal", 3.0f },
         { "portal-dal", 194481, "Dalaran Portal", 3.0f },
         { "portal-shatt", 187335, "Shattrath Portal", 3.0f },
-        { "portal-dark", 185103, "Dark Portal", 8.0f },
         { "portal-green", 181623, "Emerald Instance Portal", 3.5f },
-        { "portal-nether", 178484, "Nether Rift Portal", 3.0f },
         { "portal-teleporter", 183350, "Legion Gateway Teleporter", 4.0f },
         { "portal-bloodmyst", 182186, "Sunstrider Gateway Portal", 3.5f },
         // trainers & npcs
@@ -1140,14 +1129,14 @@ namespace WarbandCamp
         return g_enabled.load();
     }
 
-    bool IsBuildingEnabled()
+    bool IsGOMoveEnabled()
     {
-        return g_enableGOMoveBuilding.load();
+        return g_enableGOMove.load();
     }
 
-    bool IsGOMoveBuildingEnabled()
+    bool IsAutoLearnPlacementSpellEnabled()
     {
-        return IsBuildingEnabled();
+        return g_autoLearnPlacementSpell.load();
     }
 
     uint32 GetMaxProps()
@@ -1503,7 +1492,8 @@ namespace WarbandCamp
         g_guidToPropId[guid] = id;
         g_lastPlacedProp[accountId] = { id, false };
 
-        GOMove::SendAdd(player, id);
+        if (IsGOMoveEnabled())
+            GOMove::SendAdd(player, id);
 
         return id;
     }
@@ -1713,7 +1703,8 @@ namespace WarbandCamp
         if (itLast != g_lastPlacedProp.end() && !itLast->second.isCreature && itLast->second.id == propId)
             g_lastPlacedProp.erase(ownerAccount);
 
-        GOMove::SendRemove(player, propId);
+        if (IsGOMoveEnabled())
+            GOMove::SendRemove(player, propId);
 
         return true;
     }
@@ -1935,6 +1926,16 @@ public:
 
         handler->PSendSysMessage("This ground is yours. Your Warband Camp stands in |cffffff00{}|r.", zone);
         handler->SendSysMessage("Put something up with |cffffff00.camp place campfire|r - |cffffff00.camp props|r lists the rest.");
+
+        if (WarbandCamp::IsAutoLearnPlacementSpellEnabled() && WarbandCamp::IsGOMoveEnabled())
+        {
+            if (!me->HasSpell(27651))
+            {
+                me->learnSpell(27651, false);
+                handler->PSendSysMessage("|cff00ff00[Warband Camp]|r Camp placement spell 'Place Camp Object' (ID: 27651) learned.");
+            }
+        }
+
         LOG_INFO("server", "[warbandcamp] account {} ({}) claimed map {} ({:.1f}, {:.1f}) zone {} phase bit {}",
             accountId, me->GetName(), c.map, c.x, c.y, c.zoneId, c.phaseBit);
         return true;
@@ -2333,7 +2334,8 @@ public:
         obj.liveGuid = guid;
         found->objects.push_back(obj);
 
-        GOMove::SendAdd(me, id);
+        if (WarbandCamp::IsGOMoveEnabled())
+            GOMove::SendAdd(me, id);
 
         if (maxProps)
             handler->PSendSysMessage("|cffffff00{}|r set up ({} of {}).", def->label, count + 1, maxProps);
@@ -2422,7 +2424,8 @@ public:
             DespawnProp(me->GetMap(), targetId);
             CharacterDatabase.Execute(
                 "DELETE FROM mod_warband_camp_object WHERE id = {}", targetId);
-            GOMove::SendRemove(me, targetId);
+            if (WarbandCamp::IsGOMoveEnabled())
+                GOMove::SendRemove(me, targetId);
         }
 
         g_lastPlacedProp.erase(accountId);
@@ -2519,7 +2522,8 @@ public:
             found->objects.erase(found->objects.begin() + bestIdx);
             CharacterDatabase.Execute(
                 "DELETE FROM mod_warband_camp_object WHERE id = {}", bestId);
-            GOMove::SendRemove(me, bestId);
+            if (WarbandCamp::IsGOMoveEnabled())
+                GOMove::SendRemove(me, bestId);
         }
 
         auto const it = g_lastPlacedProp.find(accountId);
@@ -3104,8 +3108,12 @@ public:
         g_enableRestedXP = sConfigMgr->GetOption<bool>("WarbandCamp.EnableRestedXP", true);
         g_enableMailbox = sConfigMgr->GetOption<bool>("WarbandCamp.EnableMailbox", true);
         g_enableTrainingDummy = sConfigMgr->GetOption<bool>("WarbandCamp.EnableTrainingDummy", true);
-        g_enableGOMoveBuilding = sConfigMgr->GetOption<bool>("WarbandCamp.EnableBuilding",
-            sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding", true));
+        g_enableGOMove = sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMove",
+            sConfigMgr->GetOption<bool>("WarbandCamp.EnableBuilding",
+                sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding",
+                    sConfigMgr->GetOption<bool>("WowLegends.WarbandCamp.EnableGOMove", true))));
+        g_autoLearnPlacementSpell = sConfigMgr->GetOption<bool>("WarbandCamp.AutoLearnPlacementSpell",
+            sConfigMgr->GetOption<bool>("WowLegends.WarbandCamp.AutoLearnPlacementSpell", true));
         g_inactivityDays = sConfigMgr->GetOption<uint32>("WarbandCamp.InactivityDays", 90);
 
         float view = sConfigMgr->GetOption<float>("WarbandCamp.ViewDistance", 40.0f);
@@ -3397,8 +3405,13 @@ public:
         g_enableRestedXP = sConfigMgr->GetOption<bool>("WarbandCamp.EnableRestedXP", true);
         g_enableMailbox = sConfigMgr->GetOption<bool>("WarbandCamp.EnableMailbox", true);
         g_enableTrainingDummy = sConfigMgr->GetOption<bool>("WarbandCamp.EnableTrainingDummy", true);
-        g_enableGOMoveBuilding = sConfigMgr->GetOption<bool>("WarbandCamp.EnableBuilding",
-            sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding", true));
+        g_enableGOMove = sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMove",
+            sConfigMgr->GetOption<bool>("WarbandCamp.EnableBuilding",
+                sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding",
+                    sConfigMgr->GetOption<bool>("WowLegends.WarbandCamp.EnableGOMove", true))));
+        g_autoLearnPlacementSpell = sConfigMgr->GetOption<bool>(
+            "WarbandCamp.AutoLearnPlacementSpell",
+            sConfigMgr->GetOption<bool>("WowLegends.WarbandCamp.AutoLearnPlacementSpell", true));
         g_inactivityDays = sConfigMgr->GetOption<uint32>("WarbandCamp.InactivityDays", 90);
 
         ParseCommaDelimitedSet(sConfigMgr->GetOption<std::string>("WarbandCamp.BlacklistedMaps", ""), g_blacklistedMaps);

@@ -15,7 +15,7 @@ WBC.WarbandProps = {
             { "tent-goblin", "Goblin Striped Tent" }, { "tent-forsaken-large", "Forsaken Pavilion Tent" }, { "tent-shadow-large", "Shadow Council Pavilion" },
             { "tent-wotlk-light", "Argent Light Tent" }, { "tent-orc-war", "Orc War Camp Tent" }, { "tent-nelf", "Night Elven Pavilion" },
             { "tent-excavation", "Excavation Canopy Tent" }, { "tent-souvenir", "Festival Fair Tent" }, { "tent-fortune", "Fortune Teller Tent" },
-            { "tent-argent-outpost", "Argent Outpost Tent" }, { "tent-durotar-large", "Durotar Large Tent" }, { "tent-goblin-dome", "Goblin Domed Tent" },
+            { "tent-durotar-large", "Durotar Large Tent" }, { "tent-goblin-dome", "Goblin Domed Tent" },
         } },
         { name = "Fire & Light", props = {
             { "campfire", "Campfire" }, { "bonfire", "Bonfire" }, { "brazier", "Brazier" },
@@ -64,7 +64,7 @@ WBC.WarbandProps = {
         { name = "Defenses & Fortifications", props = {
             { "barricade-wood", "Reinforced Wooden Barricade" }, { "barricade-spikes", "Spiked Defensive Barricade" }, { "siege-catapult", "Horde Catapult" },
             { "siege-cannon", "Ironclad Field Cannon" }, { "gate-portcullis", "Cemetery Portcullis Gate" }, { "wall-palisade-orc", "Orc Palisade Wall" },
-            { "wall-spike-defensive", "Spiked Defensive Palisade" }, { "spike-heavy", "Heavy Defensive Ground Spike" }, { "gate-pvp", "Fortified Iron Gate" },
+            { "wall-spike-defensive", "Spiked Defensive Palisade" }, { "spike-heavy", "Heavy Defensive Ground Spike" },
             { "cannon-base", "Heavy Siege Mount" },
         } },
         { name = "Banners", props = {
@@ -125,26 +125,24 @@ WBC.WarbandProps = {
             { "tree-xmas-large", "Festive Conifer Tree" }, { "plant-gloomweed", "Tirisfal Gloomweed" },
         } },
         { name = "Professions", props = {
-            { "alchemy", "Alchemy Table" }, { "fishing-post", "Master Angler Fishing Post" }, { "alchemy-undead", "Forsaken Alchemy Bench" },
+            { "alchemy", "Alchemy Table" }, { "alchemy-undead", "Forsaken Alchemy Bench" },
             { "alchemy-round", "Apothecary Chemistry Set" }, { "cauldron-boiling", "Bubbling Cauldron" }, { "mortar", "Mortar and Pestle" },
             { "herbsack", "Herb Sacks" }, { "herbrack", "Herb Drying Rack" }, { "engineering-gizmo", "Engineering Gizmo" },
             { "ore-gold", "Gold Vein Deposit" }, { "table-scribe", "Scribe Drafting Table" }, { "table-apprentice-alchemy", "Apprentice Alchemy Station" },
             { "machinery-gnome", "Gnomish Field Machinery" },
         } },
         { name = "Buildings", props = {
-            { "cottage", "Cottage" }, { "beertent", "Beer Tent" }, { "pavilion", "Pavilion" },
+            { "beertent", "Beer Tent" }, { "pavilion", "Pavilion" },
             { "bigtent", "Large Tent" }, { "stable", "Stable" }, { "doghouse", "Doghouse" },
             { "outhouse", "Outhouse" }, { "pavilion-food", "Festival Food Canopy" }, { "pavilion-orc", "Orc War Pavilion" },
             { "hut-murloc", "Tribal Thatched Hut" }, { "hut-stilt", "Stilt Water Hut" }, { "booth", "Carnival Booth" },
-            { "building-moonwell", "Night Elf Moon Well" }, { "building-holding-pen", "Bamboo Holding Pen" }, { "building-landing-pad", "Aviation Landing Pad" },
-            { "building-mine", "Underground Mine Cavern" }, { "tower-guard", "Alliance Guard Tower" }, { "tower-orc", "Horde Watch Tower" },
             { "pavilion-menagerie", "Menagerie Shelter Pavilion" }, { "booth-ticket", "Carnival Ticket Gazebo" }, { "arch-festival", "Grand Festival Arch" },
             { "pavilion-royal", "Grand Royal Pavilion" },
         } },
         { name = "Portals", props = {
             { "portal-sw", "Stormwind Portal" }, { "portal-org", "Orgrimmar Portal" }, { "portal-dal", "Dalaran Portal" },
-            { "portal-shatt", "Shattrath Portal" }, { "portal-dark", "Dark Portal" }, { "portal-green", "Emerald Instance Portal" },
-            { "portal-nether", "Nether Rift Portal" }, { "portal-teleporter", "Legion Gateway Teleporter" }, { "portal-bloodmyst", "Sunstrider Gateway Portal" },
+            { "portal-shatt", "Shattrath Portal" }, { "portal-green", "Emerald Instance Portal" },
+            { "portal-teleporter", "Legion Gateway Teleporter" }, { "portal-bloodmyst", "Sunstrider Gateway Portal" },
         } },
         { name = "Trainers & NPCs", props = {
             { "npc-banker", "Banker" }, { "npc-vendor", "General Goods & Repairs" }, { "npc-reagents", "Reagents & Poisons" },

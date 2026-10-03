@@ -32,7 +32,7 @@ Designed from the ground up for high-population production servers, the module f
   - Up to 31 distinct camps can coexist within 600 yards of each other; phase bits are reused beyond 600 yards across the realm.
   - Stepping within 40 yards seamlessly phases the player into `PHASEMASK_NORMAL | (1 << campBit)`. Players continue viewing normal world terrain, buildings, NPCs, and regular players.
 - **320+ Stock 3.3.5a Scenery Props & Camp NPCs**:
-  - Extensive tents, shelters, pavilions, watchtowers, furniture, beds, chairs, tables, rugs, bookcases, wardrobes, lights, braziers, fire bowls, food platters, harvest crates, barrels, chests, garden flora, trees, portals, and faction banners.
+  - Extensive tents, shelters, pavilions, furniture, beds, chairs, tables, rugs, bookcases, wardrobes, lights, braziers, fire bowls, food platters, harvest crates, barrels, chests, garden flora, trees, portals, and faction banners.
   - Thematic categories: Shelter, Fire & Light, Furniture, Storage & Amenities, Yard, Craft, Defenses & Fortifications, Banners, Lights, Food & Provisions, Trophies & The Hunt, Graveyard & Dark Arts, Treasures & Curios, Atmosphere, Nature, Professions, Buildings, Portals, and Trainers & NPCs.
   - Fully deduplicated: every item has a unique command key, unique display label, unique entry ID, and unique 3D model, appearing in exactly one category.
   - Camp service NPCs & trainers: Banker, Stable Master (pet care), Vendor/Repairs, Reagents, Poison & Alchemy Specialist, Camp Guards (Stormwind & Orgrimmar), Innkeeper, Auctioneer, class trainers, and profession trainers.
@@ -40,13 +40,13 @@ Designed from the ground up for high-population production servers, the module f
 - **Native 3D Camp Construction Engine**:
   - In-game GameObject placement, directional nudging (compass, axis, rotation), scaling, and deletion.
   - Search `gameobject_template` with 3D model preview via `.gomovesearch`.
-  - Ground-target spell placement mode (Spell ID: 27651 - *Picnic Blanket Ritual Effect*).
+  - Ground-target spell placement mode (Spell ID: 27651 - *Place Camp Object*).
   - Automatically grants the placement spell to Game Master level accounts upon login.
   - Per-instance GameObject scale overrides persisted across server restarts.
 - **Dedicated In-Game Client UI (`WarbandCamp`)**:
   - Bundled in-game UI addon (`Addon/WarbandCamp`) with dedicated Camp management, 3D Builder tab, and interactive 3D model browser.
   - Full camp management UI: claim, teleport, customize, and place 320+ props and NPCs.
-  - Real-time 3D object manipulation: nudge, rotate, scale, ground-target placement spell (Spell ID: 27651), and nearby target selection.
+  - Real-time 3D object manipulation: nudge, rotate, scale, ground-target placement spell (Spell ID: 27651 - *Place Camp Object*), and nearby target selection.
   - Thematic Campfire launcher button and slash commands (`/wb`, `/warband`, `/campui`).
 - **Rested XP and Instant Logout**:
   - Standing inside your camp perimeter grants resting status (`REST_FLAG_IN_TAVERN`), allowing instant logout without the 20-second timer, and accumulates Rested XP while logged off.
@@ -214,7 +214,8 @@ Detailed configuration options are documented in `conf/mod_warband_camp.conf.dis
 | Option | Default | Description |
 | :--- | :---: | :--- |
 | `WarbandCamp.Enabled` | `1` | Enable or disable the Warband Camp system |
-| `WarbandCamp.EnableBuilding` | `1` | Enable player camp building and editing via the 3D construction interface and browser |
+| `WarbandCamp.EnableGOMove` | `1` | Enable or disable the GOMove 3D building tools, `.gomove`, `.gomovesearch`, placement spell, scale overrides, and Addon Builder tab. Core camp features remain active when disabled. |
+| `WarbandCamp.AutoLearnPlacementSpell` | `1` | Automatically teach the placement spell (27651 - Place Camp Object) on login and camp claim (manual learn: `.learn 27651`) |
 | `WarbandCamp.MaxProps` | `200` | Maximum number of props allowed per camp (0 = unlimited) |
 | `WarbandCamp.ViewDistance` | `40` | Yards before a camp phases into view (clamped 20–250) |
 | `WarbandCamp.AutoAlts` | `1` | Automatically wake account alts around the camp upon login (requires `mod-playerbots`) |
