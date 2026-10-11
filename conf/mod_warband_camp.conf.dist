@@ -77,23 +77,15 @@ WarbandCamp.EnableTrainingDummy = 1
 #                     When disabled (0), the core Warband Camp features (.camp claim,
 #                     .camp go, .camp place <prop>, .camp undo, .camp remove, .camp dummy,
 #                     .camp alts, Rested XP, etc.) remain fully functional.
+#                     Note: The ground placement spell (Spell ID: 27651) is managed dynamically
+#                     and temporarily by the addon when building interfaces are opened,
+#                     leaving zero persistent spellbook or database footprint.
 #        Default:     1 (Enabled - GOMove 3D building tools active)
 #                     0 (Disabled - GOMove tools disabled)
 
 WarbandCamp.EnableGOMove = 1
 WarbandCamp.EnableBuilding = 1
 WarbandCamp.EnableGOMoveBuilding = 1
-
-#    WarbandCamp.AutoLearnPlacementSpell
-#        Description: Automatically teach players the ground-target camp placement spell
-#                     ("Place Camp Object", Spell ID: 27651) on login and camp claim
-#                     when camp building is enabled.
-#                     If disabled (0), players can manually learn it using:
-#                         .learn 27651
-#        Default:     1 (Enabled - automatically learned)
-#                     0 (Disabled - manual learn via '.learn 27651')
-
-WarbandCamp.AutoLearnPlacementSpell = 1
 
 #    WarbandCamp.InactivityDays
 #        Description: Automatically release camps whose accounts have not logged in for X days.
@@ -122,7 +114,6 @@ WowLegends.WarbandCamp.AutoAlts = 1
 WowLegends.WarbandCamp.MaxProps = 200
 WowLegends.WarbandCamp.ViewDistance = 40
 WowLegends.WarbandCamp.AltsSameFactionOnly = 1
-WowLegends.WarbandCamp.AutoLearnPlacementSpell = 1
 WowLegends.WarbandCamp.EnableGOMove = 1
 WowLegends.WarbandCamp.EnableBuilding = 1
 

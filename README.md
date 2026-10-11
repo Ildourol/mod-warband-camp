@@ -41,7 +41,7 @@ Designed from the ground up for high-population production servers, the module f
   - In-game GameObject placement, directional nudging (compass, axis, rotation), scaling, and deletion.
   - Search `gameobject_template` with 3D model preview via `.gomovesearch`.
   - Ground-target spell placement mode (Spell ID: 27651 - *Place Camp Object*).
-  - Automatically grants the placement spell to Game Master level accounts upon login.
+  - On-demand temporary placement spell lifecycle: spell 27651 is dynamically granted only while an active placement UI is open and revoked immediately upon closing, keeping spellbooks and character database tables 100% clean.
   - Per-instance GameObject scale overrides persisted across server restarts.
 - **Dedicated In-Game Client UI (`WarbandCamp`)**:
   - Bundled in-game UI addon (`Addon/WarbandCamp`) with dedicated Camp management, 3D Builder tab, and interactive 3D model browser.
@@ -215,7 +215,7 @@ Detailed configuration options are documented in `conf/mod_warband_camp.conf.dis
 | :--- | :---: | :--- |
 | `WarbandCamp.Enabled` | `1` | Enable or disable the Warband Camp system |
 | `WarbandCamp.EnableGOMove` | `1` | Enable or disable the GOMove 3D building tools, `.gomove`, `.gomovesearch`, placement spell, scale overrides, and Addon Builder tab. Core camp features remain active when disabled. |
-| `WarbandCamp.AutoLearnPlacementSpell` | `1` | Automatically teach the placement spell (27651 - Place Camp Object) on login and camp claim (manual learn: `.learn 27651`) |
+| `WarbandCamp.EnableBuilding` | `1` | Alias for `WarbandCamp.EnableGOMove` |
 | `WarbandCamp.MaxProps` | `200` | Maximum number of props allowed per camp (0 = unlimited) |
 | `WarbandCamp.ViewDistance` | `40` | Yards before a camp phases into view (clamped 20–250) |
 | `WarbandCamp.AutoAlts` | `1` | Automatically wake account alts around the camp upon login (requires `mod-playerbots`) |

@@ -1927,15 +1927,6 @@ public:
         handler->PSendSysMessage("This ground is yours. Your Warband Camp stands in |cffffff00{}|r.", zone);
         handler->SendSysMessage("Put something up with |cffffff00.camp place campfire|r - |cffffff00.camp props|r lists the rest.");
 
-        if (WarbandCamp::IsAutoLearnPlacementSpellEnabled() && WarbandCamp::IsGOMoveEnabled())
-        {
-            if (!me->HasSpell(27651))
-            {
-                me->learnSpell(27651, false);
-                handler->PSendSysMessage("|cff00ff00[Warband Camp]|r Camp placement spell 'Place Camp Object' (ID: 27651) learned.");
-            }
-        }
-
         LOG_INFO("server", "[warbandcamp] account {} ({}) claimed map {} ({:.1f}, {:.1f}) zone {} phase bit {}",
             accountId, me->GetName(), c.map, c.x, c.y, c.zoneId, c.phaseBit);
         return true;

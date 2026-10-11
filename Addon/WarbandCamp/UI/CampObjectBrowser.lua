@@ -98,6 +98,7 @@ BF:SetScript("OnDragStart", BF.StartMoving)
 BF:SetScript("OnDragStop",  BF.StopMovingOrSizing)
 BF:SetBackdrop(MakeBackdrop())
 BF:Hide()
+GOMove:RegisterPlacementFrame(BF)
 table.insert(GOMove.Frames, BF)
 
 -- Title

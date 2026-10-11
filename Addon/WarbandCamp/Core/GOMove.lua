@@ -222,6 +222,70 @@ TID("PHASE",         true,  false)
 TID("SCALE",         true,  false)
 TID("SELECTALLNEAR", false, true)
 TID("SPAWNSPELL",    false, true)
+TID("PLACESPELL",    false, true)
+
+-- The ground-target placement spell is only kept in the spellbook while a
+-- placement UI is open. Frames register here; visibility is evaluated one frame
+-- later so parent/child show-hide cascades have settled.
+local PLACEMENT_SPELL = 27651
+local placementFrames = {}
+local placementRequested = nil
+
+local function PlacementSpellKnown()
+    local name = GetSpellInfo(PLACEMENT_SPELL)
+    -- Looking a spell up by name only succeeds when it is in the spellbook
+    return name ~= nil and GetSpellInfo(name) ~= nil
+end
+
+local placementSync = CreateFrame("Frame")
+placementSync:Hide()
+placementSync:SetScript("OnUpdate", function(self)
+    self:Hide()
+    local want = false
+    for _, frame in ipairs(placementFrames) do
+        if frame:IsVisible() then
+            want = true
+            break
+        end
+    end
+    if want == placementRequested then return end
+    -- Nothing to clean up on first sync if the spell isn't known
+    if placementRequested == nil and not want and not PlacementSpellKnown() then
+        placementRequested = false
+        return
+    end
+    placementRequested = want
+    SendChatMessage(".gomove " .. trinityID["PLACESPELL"][1] .. " 0 " .. (want and 1 or 0), "SAY")
+end)
+
+local function QueuePlacementSync()
+    placementSync:Show()
+end
+
+function GOMove:RegisterPlacementFrame(frame)
+    table.insert(placementFrames, frame)
+    frame:HookScript("OnShow", QueuePlacementSync)
+    frame:HookScript("OnHide", QueuePlacementSync)
+    QueuePlacementSync()
+end
+
+-- Hide the learned/unlearned chat spam caused by toggling the placement spell
+local function PlacementSpellChatFilter(_, _, msg)
+    if not msg then return false end
+    local name = GetSpellInfo(PLACEMENT_SPELL)
+    local candidateNames = { name, "Place Camp Object", "Romantic Picnic", "Picnic Blanket Ritual Effect" }
+    for _, spName in ipairs(candidateNames) do
+        if spName then
+            for _, fmt in ipairs({ ERR_LEARN_SPELL_S, ERR_LEARN_ABILITY_S, ERR_SPELL_UNLEARNED_S }) do
+                if fmt and msg == fmt:format(spName) then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", PlacementSpellChatFilter)
 
 function GOMove:Move(ID, input)
     if UnitIsDeadOrGhost("player") then
@@ -438,6 +502,7 @@ local MainFrame = GOMove:CreateFrame("GOMove_UI", 170, 490)
 GOMove.MainFrame = MainFrame
 MainFrame:Position("LEFT", UIParent, "LEFT", 0, 85)
 MainFrame:Hide()
+GOMove:RegisterPlacementFrame(MainFrame)
 
 local NEWS = GOMove:CreateInput(MainFrame, "NEWS", 40, 25, 0, -50, 4, 30)
 GOMove.Inputs_NEWS = NEWS

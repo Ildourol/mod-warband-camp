@@ -539,6 +539,7 @@ local function gomoveBuilder(parent)
         WBC.Warband.OnChange(refreshAll)
     end
     parent:HookScript("OnShow", refreshAll)
+    GOMove:RegisterPlacementFrame(parent)
     refreshAll()
 end
 
