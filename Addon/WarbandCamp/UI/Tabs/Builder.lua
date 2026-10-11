@@ -295,15 +295,8 @@ local function gomoveBuilder(parent)
         end
     end)
 
-    local spellSpawnBtn = WBC.MakeFlatButton(colLeft, 110, 22, "Place Object", { justify = "CENTER" })
+    local spellSpawnBtn = WBC.MakeFlatButton(colLeft, 110, 22, "Target Spell", { justify = "CENTER" })
     spellSpawnBtn:SetPoint("LEFT", spawnBtn, "RIGHT", 6, 0)
-    spellSpawnBtn:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Place Camp Object", 1, 0.82, 0)
-        GameTooltip:AddLine("Activates ground-targeting reticle (Spell ID: 27651) to position the selected GameObject.", 1, 1, 1, true)
-        GameTooltip:Show()
-    end)
-    spellSpawnBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     spellSpawnBtn:SetScript("OnClick", function()
         local ent = tonumber(spawnBox:GetText())
         if ent and ent > 0 then

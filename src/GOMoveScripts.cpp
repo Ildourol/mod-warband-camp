@@ -529,7 +529,7 @@ public:
 
 // ---------------------------------------------------------------------------
 // Spell script — placed on a ground-target spell (ScriptName: "spell_gomove_place")
-// Place Camp Object spell (Spell ID: 27651) via spell_script_names table.
+// Assign to spell 27651 or 897 via spell_script_names table.
 // ---------------------------------------------------------------------------
 
 class spell_gomove_place : public SpellScript

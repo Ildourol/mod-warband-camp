@@ -40,13 +40,13 @@ Designed from the ground up for high-population production servers, the module f
 - **Native 3D Camp Construction Engine**:
   - In-game GameObject placement, directional nudging (compass, axis, rotation), scaling, and deletion.
   - Search `gameobject_template` with 3D model preview via `.gomovesearch`.
-  - Ground-target spell placement mode (Spell ID: 27651 - *Place Camp Object*).
+  - Ground-target spell placement mode (Spell ID: 27651).
   - On-demand temporary placement spell lifecycle: spell 27651 is dynamically granted only while an active placement UI is open and revoked immediately upon closing, keeping spellbooks and character database tables 100% clean.
   - Per-instance GameObject scale overrides persisted across server restarts.
 - **Dedicated In-Game Client UI (`WarbandCamp`)**:
   - Bundled in-game UI addon (`Addon/WarbandCamp`) with dedicated Camp management, 3D Builder tab, and interactive 3D model browser.
   - Full camp management UI: claim, teleport, customize, and place 320+ props and NPCs.
-  - Real-time 3D object manipulation: nudge, rotate, scale, ground-target placement spell (Spell ID: 27651 - *Place Camp Object*), and nearby target selection.
+  - Real-time 3D object manipulation: nudge, rotate, scale, ground-target placement spell (Spell ID: 27651), and nearby target selection.
   - Thematic Campfire launcher button and slash commands (`/wb`, `/warband`, `/campui`).
 - **Rested XP and Instant Logout**:
   - Standing inside your camp perimeter grants resting status (`REST_FLAG_IN_TAVERN`), allowing instant logout without the 20-second timer, and accumulates Rested XP while logged off.

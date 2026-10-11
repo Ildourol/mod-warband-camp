@@ -63,7 +63,6 @@ namespace
 {
     std::atomic<bool> g_enabled{true};
     std::atomic<bool> g_enableGOMove{true};
-    std::atomic<bool> g_autoLearnPlacementSpell{true};
 
     // ---------------------------------------------------------------------
     // Tunables
@@ -1129,14 +1128,19 @@ namespace WarbandCamp
         return g_enabled.load();
     }
 
-    bool IsGOMoveEnabled()
+    bool IsBuildingEnabled()
     {
         return g_enableGOMove.load();
     }
 
-    bool IsAutoLearnPlacementSpellEnabled()
+    bool IsGOMoveBuildingEnabled()
     {
-        return g_autoLearnPlacementSpell.load();
+        return IsBuildingEnabled();
+    }
+
+    bool IsGOMoveEnabled()
+    {
+        return IsBuildingEnabled();
     }
 
     uint32 GetMaxProps()
@@ -3103,8 +3107,6 @@ public:
             sConfigMgr->GetOption<bool>("WarbandCamp.EnableBuilding",
                 sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding",
                     sConfigMgr->GetOption<bool>("WowLegends.WarbandCamp.EnableGOMove", true))));
-        g_autoLearnPlacementSpell = sConfigMgr->GetOption<bool>("WarbandCamp.AutoLearnPlacementSpell",
-            sConfigMgr->GetOption<bool>("WowLegends.WarbandCamp.AutoLearnPlacementSpell", true));
         g_inactivityDays = sConfigMgr->GetOption<uint32>("WarbandCamp.InactivityDays", 90);
 
         float view = sConfigMgr->GetOption<float>("WarbandCamp.ViewDistance", 40.0f);
@@ -3400,9 +3402,6 @@ public:
             sConfigMgr->GetOption<bool>("WarbandCamp.EnableBuilding",
                 sConfigMgr->GetOption<bool>("WarbandCamp.EnableGOMoveBuilding",
                     sConfigMgr->GetOption<bool>("WowLegends.WarbandCamp.EnableGOMove", true))));
-        g_autoLearnPlacementSpell = sConfigMgr->GetOption<bool>(
-            "WarbandCamp.AutoLearnPlacementSpell",
-            sConfigMgr->GetOption<bool>("WowLegends.WarbandCamp.AutoLearnPlacementSpell", true));
         g_inactivityDays = sConfigMgr->GetOption<uint32>("WarbandCamp.InactivityDays", 90);
 
         ParseCommaDelimitedSet(sConfigMgr->GetOption<std::string>("WarbandCamp.BlacklistedMaps", ""), g_blacklistedMaps);
