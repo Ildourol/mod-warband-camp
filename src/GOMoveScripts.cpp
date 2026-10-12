@@ -14,6 +14,7 @@
 #include "Chat.h"
 #include "ChatCommand.h"
 #include "CommandScript.h"
+#include "DatabaseEnv.h"
 #include "GameObject.h"
 #include "MapMgr.h"
 #include "ObjectMgr.h"
@@ -95,7 +96,7 @@ static void SetPlacementSpell(Player* player, bool grant)
          WarbandCamp::HasCamp(player->GetSession()->GetAccountId()));
 
     if (allowed && !player->HasSpell(GOMOVE_SPELL_PLACE))
-        player->learnSpell(GOMOVE_SPELL_PLACE, true);
+        player->addSpell(GOMOVE_SPELL_PLACE, SPEC_MASK_ALL, true, true);
 }
 
 // ---------------------------------------------------------------------------
@@ -635,6 +636,10 @@ public:
         // Strips the placement spell from characters that were permanently granted it
         if (player->HasSpell(GOMOVE_SPELL_PLACE))
             player->removeSpell(GOMOVE_SPELL_PLACE, SPEC_MASK_ALL, false);
+
+        CharacterDatabase.Execute(
+            "DELETE FROM character_spell WHERE guid = {} AND spell = {}",
+            player->GetGUID().GetCounter(), GOMOVE_SPELL_PLACE);
     }
 
     void OnPlayerLogout(Player* player) override
@@ -642,6 +647,10 @@ public:
         GOMove::Store.SpawnQueRem(player->GetGUID());
         if (player->HasSpell(GOMOVE_SPELL_PLACE))
             player->removeSpell(GOMOVE_SPELL_PLACE, SPEC_MASK_ALL, false);
+
+        CharacterDatabase.Execute(
+            "DELETE FROM character_spell WHERE guid = {} AND spell = {}",
+            player->GetGUID().GetCounter(), GOMOVE_SPELL_PLACE);
     }
 };
 
