@@ -1227,6 +1227,7 @@ namespace WarbandCamp
             case GAMEOBJECT_TYPE_CHAIR:
             case GAMEOBJECT_TYPE_TEXT:
             case GAMEOBJECT_TYPE_SPELL_FOCUS:
+            case GAMEOBJECT_TYPE_MAP_OBJECT:
                 return true;
             case GAMEOBJECT_TYPE_MAILBOX:
                 if (!g_enableMailbox.load())
