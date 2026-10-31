@@ -2,7 +2,9 @@
 -- GOMove Tab: GameObject builder, positioning keypad, elevation, rotation,
 -- scale overrides, selection manager, and 3D browser launcher inside WarbandCamp.
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
 local function gomoveBuilder(parent)
     local c = WBC.colors
@@ -367,7 +369,7 @@ local function gomoveBuilder(parent)
         for _, b in ipairs(poolSel) do b:Hide() end
 
         local data = GOMove.SelL or {}
-        if #data == 0 then
+        if table.getn(data) == 0 then
             emptySel:Show()
             contentSel:SetHeight(150)
             return
@@ -461,7 +463,7 @@ local function gomoveBuilder(parent)
         for _, b in ipairs(poolFav) do b:Hide() end
 
         local data = GOMove.FavL or {}
-        if #data == 0 then
+        if table.getn(data) == 0 then
             emptyFav:Show()
             contentFav:SetHeight(120)
             return

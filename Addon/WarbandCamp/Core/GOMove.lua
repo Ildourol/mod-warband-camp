@@ -3,7 +3,9 @@
 -- Preserves all original GOMove tables, functions, data structures, protocol handling,
 -- floating utility windows, and /gomove slash command.
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
 GOMove = GOMove or {Frames = {}, Inputs = {}}
 _G.GOMove = GOMove
@@ -56,7 +58,7 @@ function GOMove:CreateFrame(name, width, height, DataTable, both)
     if DataTable then
         Frame.DataTable = DataTable
         function Frame:Update()
-            local maxValue = #DataTable
+            local maxValue = table.getn(DataTable)
             FauxScrollFrame_Update(self.ScrollBar, maxValue, self.ButtonCount, 16, nil, nil, nil, nil, nil, nil, true)
             local offset = FauxScrollFrame_GetOffset(self.ScrollBar)
             for idx = 1, self.ButtonCount do
@@ -64,7 +66,7 @@ function GOMove:CreateFrame(name, width, height, DataTable, both)
                 if value <= maxValue then
                     local Btn = self.Buttons[idx]
                     local Label = DataTable[value][1]
-                    if DataTable.NameWidth and #DataTable[value][1] > DataTable.NameWidth then
+                    if DataTable.NameWidth and string.len(DataTable[value][1]) > DataTable.NameWidth then
                         Label = DataTable[value][1]:sub(0, DataTable.NameWidth - 2) .. ".."
                     end
                     if not both then
@@ -493,7 +495,7 @@ EmptyButton:SetScript("OnClick", function()
     for _, k in ipairs(toRemove) do
         GOMove.Selected:Del(k)
     end
-    for i = #SelFrame.DataTable, 1, -1 do
+    for i = table.getn(SelFrame.DataTable), 1, -1 do
         table.remove(SelFrame.DataTable, i)
     end
     SelFrame:Update()
@@ -721,7 +723,7 @@ local PLACE_SPELL_DESC = "Target a location on the ground to place your selected
 local PLACE_SPELL_ICON = "Interface\\Icons\\INV_Hammer_20"
 
 if GetSpellInfo then
-    function GetSpellInfo(spell, ...)
+    function GetSpellInfo(spell, a1, a2, a3, a4, a5)
         if spell == PLACE_SPELL_ID then
             local _, rank, origIcon, cost, isFunnel, powerType, castTime, minRange, maxRange = _origGetSpellInfo(PLACE_SPELL_ID, ...)
             return PLACE_SPELL_NAME, rank or "", PLACE_SPELL_ICON, cost or 0, isFunnel, powerType, castTime or 0, minRange or 0, maxRange or 0
@@ -733,17 +735,17 @@ if GetSpellInfo then
             end
             return nil
         end
-        return _origGetSpellInfo(spell, ...)
+        return _origGetSpellInfo(spell, a1, a2, a3, a4, a5)
     end
 end
 
 if GetSpellLink then
     local _origGetSpellLink = GetSpellLink
-    function GetSpellLink(spell, ...)
+    function GetSpellLink(spell, a1, a2, a3, a4, a5)
         if spell == PLACE_SPELL_ID or spell == PLACE_SPELL_NAME then
             return "|cff71d5ff|Hspell:27651|h[" .. PLACE_SPELL_NAME .. "]|h|r"
         end
-        return _origGetSpellLink(spell, ...)
+        return _origGetSpellLink(spell, a1, a2, a3, a4, a5)
     end
 end
 

@@ -7,7 +7,9 @@
 -- not-enabled reply this panel greys out for the session.
 -- Boundaries: NO Warband Bank, NO banner picker (v1.6 — layout room left).
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
 local function row(id, label, fmt, tooltip, args)
     return { id = id, label = label, format = fmt, wl = false, group = "Warband",
@@ -15,12 +17,22 @@ local function row(id, label, fmt, tooltip, args)
 end
 
 local CampRows = {
+    row("wb_status", "Camp status", ".camp",
+        "Display your camp status, active map, foundation coordinates, and placed prop count in chat."),
     row("wb_claim", "Claim camp", ".camp claim",
-        "Found your Warband Camp on the ground you're standing on. The server refuses with a one-line reason if the spot won't work (indoors, water, city, bridge, too close to another camp, ...)."),
+        "Found your Warband Camp on the ground you're standing on. The server checks placement rules (outdoors, distance from other camps, etc.)."),
     row("wb_go", "Travel to camp", ".camp go",
-        "Teleport to your camp. 5-minute cooldown (shared with Visit); blocked in combat, while dead, and in BGs/arenas/Pilgrim's Way."),
+        "Teleport directly to your camp foundation. Shares cooldown with Visit."),
+    row("wb_leave", "Leave camp", ".camp leave",
+        "Teleport back to the exact location you were at before traveling or visiting a camp."),
     row("wb_alts", "Gather alts", ".camp alts",
-        "Manually re-gather your alts at the camp (max 8). They normally gather on their own at login."),
+        "Manually re-gather your account's other characters at the camp to relax around the fire."),
+    row("wb_props", "List placed props", ".camp props",
+        "List all props currently placed in your camp with their unique IDs, distances, and coordinates."),
+    row("wb_undo", "Undo last prop", ".camp undo",
+        "Packs away and removes the most recently placed prop in your camp."),
+    row("wb_remove", "Remove prop", ".camp remove",
+        "Packs away the nearest camp prop directly in front of you."),
     row("wb_privacy", "Camp privacy", ".camp privacy %s",
         "Set who can discover and visit your camp: public, party, guild, or private.",
         { { key = "mode", choices = { "public", "party", "guild", "private" }, placeholder = "privacy", width = 110 } }),
@@ -31,10 +43,17 @@ local CampRows = {
         "Set greeting displayed to visitors crossing into camp, or type 'clear' to remove.",
         { { key = "msg", placeholder = "greeting or clear", width = 140 } }),
     row("wb_visit", "Visit player", ".camp visit %s",
-        "Travel to another player's camp. Shares the 5-minute cooldown with Travel. Blank = your current target.",
-        { {key="name",placeholder="player",fallback="target",width=120} }),
+        "Travel to another player's public camp. Blank = your current target.",
+        { { key = "name", placeholder = "player", fallback = "target", width = 120 } }),
     row("wb_list", "Nearby camps", ".camp list",
-        "List camps near you - who, zone, distance - in your chat."),
+        "List active camps near you - character name, zone, and distance."),
+    row("wb_catalogue", "Prop catalogue", ".camp catalogue",
+        "Dumps the registered prop catalogue and keys into your chat."),
+    row("wb_reload", "Reload configs", ".camp reload",
+        "Reload camp configurations, limits, and database overrides (Staff / GM)."),
+    row("wb_diag", "Camp diag", ".camp diag %s",
+        "Inspect and diagnose camp records for specified player name (Staff / GM).",
+        { { key = "name", placeholder = "player name", width = 120 } }),
 }
 
 local function warbandBuilder(parent)

@@ -1,7 +1,9 @@
 -- WarbandCamp/UI/ToggleButton.lua
 -- Draggable launcher button with campfire icon. Click -> toggle panel. SHIFT-drag -> reposition.
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
 local SIZE = 32
 

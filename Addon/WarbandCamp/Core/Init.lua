@@ -3,7 +3,9 @@
 --
 -- Warband Camp panel & 3D Builder — WotLK 3.3.5a (AzerothCore mod-warband-camp).
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 _G.WarbandCamp = WBC
 _G.WBC = WBC
 -- Backward-compatibility bridge
@@ -50,7 +52,7 @@ do
     ticker:Hide()
     ticker:SetScript("OnUpdate", function(self, elapsed)
         local now = GetTime()
-        for i = #queue, 1, -1 do
+        for i = table.getn(queue), 1, -1 do
             if now >= queue[i].at then
                 local fn = queue[i].fn
                 table.remove(queue, i)
@@ -60,7 +62,7 @@ do
                 end
             end
         end
-        if #queue == 0 then self:Hide() end
+        if table.getn(queue) == 0 then self:Hide() end
     end)
     function WBC.After(delay, fn)
         table.insert(queue, { at = GetTime() + (delay or 0), fn = fn })
@@ -134,7 +136,7 @@ function WBC.DumpDebug()
     DEFAULT_CHAT_FRAME:AddMessage(c.accent .. WBC.name .. " debug" .. c.reset .. "  v" .. WBC.version)
     pp("MainFrame", WarbandCamp_MainFrame)
     pp("ToggleButton", WarbandCamp_ToggleButton)
-    pp("tabs registered", WBC.tabs and #WBC.tabs or 0)
+    pp("tabs registered", WBC.tabs and table.getn(WBC.tabs) or 0)
     if WBC._mainFrameLoadError then pp("MainFrame load error", WBC._mainFrameLoadError) end
     DEFAULT_CHAT_FRAME:AddMessage("  modules:")
     for _, m in ipairs({

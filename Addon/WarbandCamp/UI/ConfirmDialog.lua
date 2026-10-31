@@ -2,7 +2,9 @@
 -- Self-contained custom confirmation dialog for dangerous commands.
 -- Avoids touching Blizzard's StaticPopupDialogs table to guarantee 0 UI taint on 3.3.5a.
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
 local dialogFrame
 

@@ -46,7 +46,7 @@ browserEventFrame:SetScript("OnEvent", function(self, event, prefix, msg, msgTyp
 
     -- GSEND|total
     if msg:sub(1, 6) == "GSEND|" then
-        local count = #searchResults
+        local count = table.getn(searchResults)
         totalPages  = math.max(1, math.ceil(count / PAGE_SIZE))
         currentPage = 1
         if resultScroll then
@@ -401,7 +401,7 @@ function GOMove_Browser_UpdateRows()
     end
     local offset    = FauxScrollFrame_GetOffset(resultScroll) or 0
     local pageStart = (currentPage - 1) * PAGE_SIZE + 1
-    local pageEnd   = math.min(currentPage * PAGE_SIZE, #searchResults)
+    local pageEnd   = math.min(currentPage * PAGE_SIZE, table.getn(searchResults))
     local pageCount = math.max(0, pageEnd - pageStart + 1)
 
     FauxScrollFrame_Update(resultScroll, pageCount, VISIBLE_ROWS, ROW_HEIGHT,
@@ -413,7 +413,7 @@ function GOMove_Browser_UpdateRows()
         if dataIdx <= pageEnd and searchResults[dataIdx] then
             local r = searchResults[dataIdx]
             local displayName = tostring(r.entry) .. "  " .. r.name
-            if #displayName > 42 then displayName = displayName:sub(1, 40) .. "..." end
+            if string.len(displayName) > 42 then displayName = displayName:sub(1, 40) .. "..." end
             row:SetText(displayName)
             row.entryID   = r.entry
             row.entryName = r.name

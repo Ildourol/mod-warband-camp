@@ -2,7 +2,9 @@
 -- Warband Camp state: parse the server's CHAT_MSG_SYSTEM replies to `.camp`
 -- commands into a small session-cached state table the tab renders from.
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
 local W = {
     probed  = false,   -- have we heard ANY .camp status yet this session

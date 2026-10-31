@@ -2,9 +2,11 @@
 -- Movable parent window: header, left tab rail ("left menu"), content area
 -- (each tab hangs its own content inside), and a footer with manual command bar.
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
-local FRAME_W, FRAME_H = 900, 560
+local FRAME_W, FRAME_H = 920, 680
 local HEADER_H = 32
 local RAIL_W   = 120
 local FOOTER_H = 22

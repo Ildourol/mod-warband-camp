@@ -1,7 +1,9 @@
 -- WarbandCamp/UI/Tabs/Favorites.lua
 -- Your pinned commands. Right-click any command anywhere to pin/unpin it.
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
 WBC.RegisterTab({
     id = "favorites", label = "Favorites",
@@ -17,7 +19,7 @@ WBC.RegisterTab({
         local function refresh()
             if holder then holder:Hide(); holder:SetParent(nil); holder = nil end
             local favs = WBC.GetFavorites()
-            if #favs == 0 then empty:Show(); content:SetHeight(200); return end
+            if table.getn(favs) == 0 then empty:Show(); content:SetHeight(200); return end
             empty:Hide()
             holder = CreateFrame("Frame", nil, content)
             holder:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)

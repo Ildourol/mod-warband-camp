@@ -1,7 +1,9 @@
 -- WarbandCamp/UI/Tabs/History.lua
 -- The last commands you sent. Click any to re-run it.
 
-local addonName, WBC = ...
+local addonName = "WarbandCamp"
+local WBC = _G[addonName] or {}
+_G[addonName] = WBC
 
 WBC.RegisterTab({
     id = "history", label = "History",
@@ -36,7 +38,7 @@ WBC.RegisterTab({
         local function refresh()
             for _, b in ipairs(pool) do b:Hide() end
             local hist = WBC.GetHistory()
-            if #hist == 0 then empty:Show(); content:SetHeight(200); return end
+            if table.getn(hist) == 0 then empty:Show(); content:SetHeight(200); return end
             empty:Hide()
             local y = -4
             for i, line in ipairs(hist) do
