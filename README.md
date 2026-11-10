@@ -181,6 +181,31 @@ mod-warband-camp/
 
 ---
 
+## Database cleanup and uninstall
+
+A manual SQL uninstall package is available in [`tools/uninstall`](tools/uninstall/README.md)
+for administrators removing the module, including installations without a pre-install
+backup. It previews affected data, optionally restores reviewed parked alts to their
+saved locations, and removes confirmed module-owned tables and registrations.
+
+**All cleanup scripts default to making no changes.** Execution requires an exact
+database-name check, explicit action switches, and confirmation that the worldserver
+is stopped and a backup of the **current** databases exists. Placement-spell removal
+requires an explicit character GUID list. Legacy tables, shared GOMove data, and
+customized command rows are preserved by default.
+
+Follow the [full uninstall procedure](tools/uninstall/README.md) before running SQL.
+Keep the server stopped until the module is removed and the server rebuilt: setting
+`WarbandCamp.Enabled = 0` alone does not prevent startup table creation or separate
+GOMove hooks. These files are outside the automatic SQL import directories and must
+never be copied into them.
+
+This removes recoverable module data; it cannot reconstruct GM edits/deletions of
+existing world objects, unknown prior command permissions, or other historical
+gameplay state without a backup or an independent change record.
+
+---
+
 ## Commands
 
 | Command | Security | Description |
