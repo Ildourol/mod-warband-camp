@@ -1,4 +1,4 @@
-## Interface: 11200
+## Interface: 30300
 ## Title: |cffffc94dWarband Camp|r
 ## Notes: In-game camp management & 3D construction toolkit for AzerothCore (mod-warband-camp).
 ## Author: AzerothCore

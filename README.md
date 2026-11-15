@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/azerothcore/azerothcore-wotlk"><img src="https://img.shields.io/badge/AzerothCore-WotLK%203.3.5a-blue.svg" alt="AzerothCore"></a>
+  <a href="https://github.com/mod-playerbots/azerothcore-wotlk"><img src="https://img.shields.io/badge/AzerothCore-WotLK%203.3.5a-blue.svg" alt="AzerothCore"></a>
   <a href="https://github.com/Ildourol/mod-warband-camp/blob/main/conf/mod_warband_camp.conf.dist"><img src="https://img.shields.io/badge/Configuration-Fully%20Configurable-brightgreen.svg" alt="Configurable"></a>
   <a href="https://github.com/Ildourol/mod-warband-camp/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GNU%20AGPL%20v3-lightgrey.svg" alt="License"></a>
   <img src="https://img.shields.io/badge/Zero%20Core%20Edits-100%25-success.svg" alt="Zero Core Edits">
@@ -16,7 +16,7 @@
 
 ## Description
 
-**mod-warband-camp** is a comprehensive player housing, open-world campsite, warband gathering, and native in-game 3D construction module for AzerothCore (WotLK 3.3.5a).
+**mod-warband-camp** is a comprehensive player housing, open-world campsite, warband gathering, and native in-game 3D construction module for the [mod-playerbots AzerothCore fork](https://github.com/mod-playerbots/azerothcore-wotlk) (`Playerbot` branch) and the WoW WotLK 3.3.5a client.
 
 It seamlessly unifies the **Warband Camp** system (account-wide campsite, custom dynamic phasing, rest bonuses, and camp customization) with a high-performance **3D Construction Engine** into ONE coherent camp-owned construction system. Players use integrated 3D building tools (compass keypad, elevation, rotation, scale, ground-target placement, and 3D model browser) strictly for their own camp-owned objects—sharing identical database persistence, phase isolation, limits, and cleanup—while Game Masters retain unrestricted administrative world-building capabilities.
 
@@ -140,7 +140,7 @@ mod-warband-camp/
 ## Installation
 
 ### 1. Module Setup
-1. Clone this repository into your AzerothCore `modules/` directory:
+1. Clone this repository into the `modules/` directory of the [mod-playerbots AzerothCore fork](https://github.com/mod-playerbots/azerothcore-wotlk/tree/Playerbot). Use the world database supplied by that fork. The bundled addon declares interface `30300` and requires a WotLK 3.3.5a client.
    ```bash
    cd azerothcore-wotlk/modules
    git clone https://github.com/Ildourol/mod-warband-camp.git
@@ -234,7 +234,7 @@ Detailed configuration options are documented in `conf/mod_warband_camp.conf.dis
 - **AzerothCore WotLK (branch `master`)**
 - **Client**: World of Warcraft: Wrath of the Lich King (3.3.5a - Build 12340)
 - Compatible with:
-  - [mod-playerbots](https://github.com/liyunfan1223/mod-playerbots)
+  - [mod-playerbots](https://github.com/mod-playerbots/mod-playerbots)
   - Bundled `WarbandCamp` addon (included under `Addon/WarbandCamp`)
 
 ---
