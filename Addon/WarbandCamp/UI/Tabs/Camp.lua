@@ -7,9 +7,7 @@
 -- not-enabled reply this panel greys out for the session.
 -- Boundaries: NO Warband Bank, NO banner picker (v1.6 — layout room left).
 
-local addonName = "WarbandCamp"
-local WBC = _G[addonName] or {}
-_G[addonName] = WBC
+local addonName, WBC = ...
 
 local function row(id, label, fmt, tooltip, args)
     return { id = id, label = label, format = fmt, wl = false, group = "Warband",
@@ -24,11 +22,11 @@ local CampRows = {
     row("wb_go", "Travel to camp", ".camp go",
         "Teleport directly to your camp foundation. Shares cooldown with Visit."),
     row("wb_leave", "Leave camp", ".camp leave",
-        "Teleport back to the exact location you were at before traveling or visiting a camp."),
+        "Pack up your camp and clear placed objects. Requires confirmation."),
     row("wb_alts", "Gather alts", ".camp alts",
         "Manually re-gather your account's other characters at the camp to relax around the fire."),
-    row("wb_props", "List placed props", ".camp props",
-        "List all props currently placed in your camp with their unique IDs, distances, and coordinates."),
+    row("wb_props", "List available props", ".camp props",
+        "List prop keys available for placement."),
     row("wb_undo", "Undo last prop", ".camp undo",
         "Packs away and removes the most recently placed prop in your camp."),
     row("wb_remove", "Remove prop", ".camp remove",

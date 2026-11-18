@@ -1,9 +1,7 @@
 -- WarbandCamp/Core/CommandRunner.lua
 -- The single chokepoint for sending dot-commands (.camp / .gomove).
 
-local addonName = "WarbandCamp"
-local WBC = _G[addonName] or {}
-_G[addonName] = WBC
+local addonName, WBC = ...
 
 -- Deliver a dot-command. AzerothCore intercepts messages that begin with the
 -- command prefix in the chat handler BEFORE they are broadcast, so
@@ -34,7 +32,7 @@ end
 function WBC.BuildLine(def, values)
     if not def or not def.format then return nil, "no command" end
     local args = def.args or {}
-    if table.getn(args) == 0 then return def.format end
+    if #args == 0 then return def.format end
 
     local resolved = {}
     for i, arg in ipairs(args) do
@@ -55,12 +53,12 @@ function WBC.BuildLine(def, values)
     end
 
     -- Drop trailing blank optionals so the line stays tidy.
-    while table.getn(resolved) > 0 and resolved[table.getn(resolved)] == "" do resolved[table.getn(resolved)] = nil end
+    while #resolved > 0 and resolved[#resolved] == "" do resolved[#resolved] = nil end
 
     local placeholders = 0
     for _ in def.format:gmatch("%%s") do placeholders = placeholders + 1 end
 
-    if table.getn(resolved) == placeholders then
+    if #resolved == placeholders then
         return string.format(def.format, unpack(resolved))
     else
         local padded = {}

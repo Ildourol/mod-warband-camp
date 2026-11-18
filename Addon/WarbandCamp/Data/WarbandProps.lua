@@ -2,9 +2,7 @@
 -- The Warband Camp prop & NPC catalogue: category -> { key, label } pairs.
 -- key = what `.camp place <key>` expects · label = what the player sees.
 
-local addonName = "WarbandCamp"
-local WBC = _G[addonName] or {}
-_G[addonName] = WBC
+local addonName, WBC = ...
 
 WBC.WarbandProps = {
     catalogueVersion = "1.4.0",

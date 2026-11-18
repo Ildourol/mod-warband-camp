@@ -1,9 +1,7 @@
 -- WarbandCamp/Core/Util.lua
 -- Theme colours, print helpers, small string/target utilities.
 
-local addonName = "WarbandCamp"
-local WBC = _G[addonName] or {}
-_G[addonName] = WBC
+local addonName, WBC = ...
 
 -- ─── Brand palette ─────────────────────────────────────────────────────────
 WBC.colors = {

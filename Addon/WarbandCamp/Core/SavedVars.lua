@@ -1,9 +1,7 @@
 -- WarbandCamp/Core/SavedVars.lua
 -- Frame-position persistence, history ring buffer, favorites, and input cache.
 
-local addonName = "WarbandCamp"
-local WBC = _G[addonName] or {}
-_G[addonName] = WBC
+local addonName, WBC = ...
 
 local HISTORY_MAX = 30
 
@@ -40,7 +38,7 @@ function WBC.PushHistory(line)
     d.history = d.history or {}
     if d.history[1] == line then return end
     table.insert(d.history, 1, line)
-    while table.getn(d.history) > HISTORY_MAX do table.remove(d.history) end
+    while #d.history > HISTORY_MAX do table.remove(d.history) end
     if WBC.RefreshHistoryTab then WBC.RefreshHistoryTab() end
 end
 

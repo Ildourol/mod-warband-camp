@@ -2,9 +2,7 @@
 -- Reusable UI factories used by tabs. Built from lightweight, single-
 -- texture widgets so tabs stack rows smoothly.
 
-local addonName = "WarbandCamp"
-local WBC = _G[addonName] or {}
-_G[addonName] = WBC
+local addonName, WBC = ...
 
 local ROW_HEIGHT  = 26
 local ROW_SPACING = 4
@@ -165,7 +163,7 @@ function WBC.CreateChoice(parent, w, h, choices, placeholder, onSelect)
 
             menu:EnableMouseWheel(true)
             menu:SetScript("OnMouseWheel", function(self, delta)
-                local maxOffset = math.max(0, table.getn(c.choices) - 15)
+                local maxOffset = math.max(0, #c.choices - 15)
                 if maxOffset == 0 then return end
                 self._offset = math.max(0, math.min(maxOffset, (self._offset or 0) - delta * 3))
                 self.render()
@@ -182,12 +180,12 @@ function WBC.CreateChoice(parent, w, h, choices, placeholder, onSelect)
                 tw = (menu._btns[1].label:GetStringWidth() or 0) + 32
                 menu._btns[1].label:SetText(oldText)
             else
-                tw = (string.len(tostring(text)) * 8) + 32
+                tw = (#tostring(text) * 8) + 32
             end
             if tw > maxw then maxw = tw end
         end
 
-        local visibleCount = math.min(table.getn(c.choices), 15)
+        local visibleCount = math.min(#c.choices, 15)
         local btnWidth = math.max(w, maxw)
         menu:SetWidth(btnWidth + 8)
         menu:SetHeight(visibleCount * 20 + 8)
