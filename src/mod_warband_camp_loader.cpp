@@ -8,11 +8,13 @@
 
 void AddWarbandCampScripts();
 void AddSC_GOMove_commandscript();
+void AddCampStewardScripts();
 
 void Addmod_warband_campScripts()
 {
     AddWarbandCampScripts();
     AddSC_GOMove_commandscript();
+    AddCampStewardScripts();
 }
 
 void Addmod_warband_camp_gomoveScripts()

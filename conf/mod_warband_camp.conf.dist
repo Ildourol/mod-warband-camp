@@ -70,6 +70,48 @@ WarbandCamp.EnableMailbox = 1
 
 WarbandCamp.EnableTrainingDummy = 1
 
+#    WarbandCamp.Steward.Repair
+#        Description: Allow the camp steward to offer equipment repairs at normal vendor cost.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.Steward.Repair = 1
+
+#    WarbandCamp.Steward.Mailbox
+#        Description: Allow the camp steward to act as a personal mailbox.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.Steward.Mailbox = 1
+
+#    WarbandCamp.Steward.Sickness
+#        Description: Allow the camp steward to cure resurrection sickness.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.Steward.Sickness = 1
+
+#    WarbandCamp.Steward.ResetInstances
+#        Description: Allow the camp steward to reset 5-man dungeon instances.
+#        Default:     1 (Enabled)
+#                     0 (Disabled)
+
+WarbandCamp.Steward.ResetInstances = 1
+
+#    WarbandCamp.Steward.ClearLockouts
+#        Description: Allow the camp steward to clear all heroic and raid lockouts.
+#        Default:     0 (Disabled)
+#                     1 (Enabled)
+
+WarbandCamp.Steward.ClearLockouts = 0
+
+# Aliases for WowLegends legacy namespace compatibility
+WowLegends.WarbandCamp.Steward.Repair = 1
+WowLegends.WarbandCamp.Steward.Mailbox = 1
+WowLegends.WarbandCamp.Steward.Sickness = 1
+WowLegends.WarbandCamp.Steward.ResetInstances = 1
+WowLegends.WarbandCamp.Steward.ClearLockouts = 0
+
 #    WarbandCamp.EnableGOMove
 #        Description: Enable or disable the GOMove 3D building and construction system
 #                     (.gomove, .gomovesearch, ground-target placement spell 27651,

@@ -134,7 +134,7 @@ WBC.WarbandProps = {
             { "machinery-gnome", "Gnomish Field Machinery" },
         } },
         { name = "Buildings", props = {
-            { "beertent", "Beer Tent" }, { "pavilion", "Pavilion" },
+            { "cottage", "Cottage" }, { "beertent", "Beer Tent" }, { "pavilion", "Pavilion" },
             { "bigtent", "Large Tent" }, { "stable", "Stable" }, { "doghouse", "Doghouse" },
             { "outhouse", "Outhouse" }, { "pavilion-food", "Festival Food Canopy" }, { "pavilion-orc", "Orc War Pavilion" },
             { "hut-murloc", "Tribal Thatched Hut" }, { "hut-stilt", "Stilt Water Hut" }, { "booth", "Carnival Booth" },
@@ -147,6 +147,7 @@ WBC.WarbandProps = {
             { "portal-teleporter", "Legion Gateway Teleporter" }, { "portal-bloodmyst", "Sunstrider Gateway Portal" },
         } },
         { name = "Trainers & NPCs", props = {
+            { "steward", "Camp Steward" },
             { "npc-banker", "Banker" }, { "npc-vendor", "General Goods & Repairs" }, { "npc-reagents", "Reagents & Poisons" },
             { "npc-innkeeper", "Innkeeper (Hearthstone)" }, { "npc-auctioneer", "Auctioneer" }, { "npc-stablemaster", "Stable Master (Pet Care)" },
             { "npc-poisons", "Poison & Alchemy Specialist" }, { "npc-guard-sw", "Stormwind Camp Guard" }, { "npc-guard-org", "Orgrimmar Camp Guard" },
